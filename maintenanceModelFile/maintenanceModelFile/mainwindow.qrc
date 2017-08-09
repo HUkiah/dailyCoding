@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/images">
+        <file alias="file-maintenance">Resources/Maintenance.png</file>
+        <file alias="file-open">Resources/Open Folder.png</file>
+        <file alias="file-save">Resources/Save-50.png</file>
+    </qresource>
+</RCC>
