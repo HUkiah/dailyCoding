@@ -1,31 +1,88 @@
 #ifndef RENDERINGWIDGET_H
-#define RENDERINGWIDGET_H  
+#define RENDERINGWIDGET_H
 
-#include <QtGui>
-#include <QtWidgets>
-#include <QtOpenGL/QtOpenGL>  
-#include "ui_mainwindow.h"  
-#include "mainwindow.h"
+#include <QOpenGLWidget>
+#include <QEvent>
+#include "ArcBall.h"
+#include "Vec.h"
+#include "Mesh3D.h"
 
-class RenderingWidget : public QGLWidget, public Ui::MainWindowClass
+using trimesh::vec;
+using trimesh::point;
+
+class MainWindow;
+
+class RenderingWidget : public QOpenGLWidget
 {
 	Q_OBJECT
 
 public:
-	RenderingWidget(QWidget *parent = 0, const QGLWidget* shareEidget = 0);
+	MainWindow *parent;
+
+	RenderingWidget(QWidget *parent);
 	~RenderingWidget();
 
-protected:
-	virtual void initializeGL();
-	virtual void resizeGL(int w, int h);
-	virtual void paintGL();
+public:
+	CArcBall					*ptr_arcball_;
+	CArcBall					*ptr_arcball_module_;
 
-	virtual void mouseDoubleClickEvent(QMouseEvent *event);
-	virtual void closeEvent(QCloseEvent *event);
+	Mesh3D						*ptr_mesh_;
+	
+	//Texture
+	GLuint						texture_[1];
+	bool						is_load_texture_;
+
+	// eye
+	GLfloat						eye_distance_;
+	point						eye_goal_;
+	vec							eye_direction_;
+	QPoint						current_position_;
+
+
+	// Render information
+
+	bool						has_lighting_;//是否设置光源
+
+	bool						is_draw_axes_;
+	bool						is_draw_grid_;
+	bool						is_draw_point_;
+	bool						is_draw_edge_;
+	bool						is_draw_face_;
+	bool						is_draw_texture_;
+
+	bool						is_move_module_;
+	bool						is_draw_cutpieces_;
+	bool						is_draw_hatch_;
+private:
+	void DrawAxes(bool bv);
+	void DrawPoints(bool);
+	void DrawEdge(bool);
+	void DrawFace(bool);
+	void DrawTexture(bool);
+	void DrawGrid(bool bV);
+
+
+protected:
+	void initializeGL();
+	void resizeGL(int w, int h);
+	void paintGL();
+	
+
+	//mouse events
+	void mousePressEvent(QMouseEvent *e);
+	void mouseMoveEvent(QMouseEvent *e);
+	void mouseReleaseEvent(QMouseEvent *e);
+	void mouseDoubleClickEvent(QMouseEvent *e);
+	void wheelEvent(QWheelEvent *e);
 
 private:
-	GLfloat Point[5][3];    ///< 五角星坐标  
+	void Render();
+	void SetLight();
 
+public slots:
+	void MntnMesh();
+	void ReadMesh();
+	void WriteMesh();
 };
 
-#endif // RENDERINGWIDGET_H  
+#endif // RENDERINGWIDGET_H
