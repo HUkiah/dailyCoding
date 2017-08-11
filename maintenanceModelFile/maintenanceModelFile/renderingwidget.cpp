@@ -8,13 +8,15 @@
 #include "QTextCodec"
 
 RenderingWidget::RenderingWidget(QWidget *parent)
-	: QOpenGLWidget(parent), has_lighting_(true), eye_distance_(5.0),
+	: QOpenGLWidget(parent), has_lighting_(false), eye_distance_(5.0),
 	is_draw_point_(false), is_draw_edge_(false), is_draw_face_(true)
 {
 	ptr_arcball_ = new CArcBall(width(), height());
 	ptr_arcball_module_ = new CArcBall(width(), height());
 
 	ptr_mesh_ = new Mesh3D();
+	
+	is_move_module_ = (false);
 	is_load_texture_ = false;
 	is_draw_axes_ = false;
 	is_draw_texture_ = (false);
@@ -37,9 +39,9 @@ void RenderingWidget::initializeGL()
 	glShadeModel(GL_SMOOTH);//平滑渐变 对应的GL_FLAT是单色方式（两点间取一点的颜色着色）
 	glEnable(GL_DOUBLEBUFFER);//启用双缓冲
 
-	//glEnable(GL_CULL_FACE);开启剔除操作效果 避免不必要的渲染 
+	//glEnable(GL_CULL_FACE);//开启剔除操作效果 避免不必要的渲染 
 
-	glEnable(GL_COLOR_MATERIAL);//使用颜色材质,使我们可以用颜色来贴物体
+	glEnable(GL_COLOR_MATERIAL);//用颜色材质,使我们可以用颜色来贴物体
 	glColorMaterial(GL_FRONT, GL_DIFFUSE);//最开始颜色材质对应的是ambient(环境)的。所以要给为diffuse(传播)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);//则表示源颜色乘以自身的alpha 值，目标颜色乘以1.0减去源颜色的alpha值(不透明度)
 	glEnable(GL_BLEND);//开启混合功能
@@ -64,7 +66,7 @@ void RenderingWidget::resizeGL(int w, int h)
 	glMatrixMode(GL_PROJECTION);//投影矩阵Model( 将要对投影矩阵操作)
 	glLoadIdentity();//重置当前指定的矩阵为单位矩阵
 
-	gluPerspective(45.0, GLdouble(w) / GLdouble(h), 0.1, 10000);//指定了观察的视景体
+	gluPerspective(45.0, GLdouble(w) / GLdouble(h), 0.1, 1000);//指定了观察的视景体
 
 	glMatrixMode(GL_MODELVIEW);//Object space to Eyes space(将要设置模型空间位置)
 	glLoadIdentity();//(设置其为单位矩阵)
@@ -89,56 +91,49 @@ void RenderingWidget::paintGL()
 	glMatrixMode(GL_MODELVIEW);//(将要设置模型空间位置)
 	glLoadIdentity();//(设置其为单位矩阵)
 
-	register vec eyepos = eye_distance_*eye_direction_;
+	register vec eyepos = eye_distance_*eye_direction_; 
 	gluLookAt(eyepos[0], eyepos[1], eyepos[2],//eye position
 		eye_goal_[0], eye_goal_[1], eye_goal_[2],//eye angel
 		0.0, 1.0, 0.0);// Y coordinate
-	//glPushMatrix();
+
+	glPushMatrix();
 
 	glMultMatrixf(ptr_arcball_->GetBallMatrix());
 	//用矩阵M 调用glMultMatrix 对顶点v的变换就从原来的C × v变成C × M × v
 	Render();
-	//glPopMatrix();
+	glPopMatrix();
 }
 
 void RenderingWidget::SetLight()
 {
-	//return;
-	static GLfloat mat_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };//镜面
-	static GLfloat mat_shininess[] = { 50.0f };//亮度
-	static GLfloat light_position0[] = { 1.0f, 1.0f, 0.5f, 0.0f };
-	static GLfloat light_position1[] = { -1.0f, -1.0f, 0.5f, 0.0f };
-	static GLfloat light_position2[] = { -.0f, -.0f, -0.5f, 0.0f };
-	static GLfloat bright[] = { 0.7f, 0.7f, 0.7f, 1.0f };//车头(最前面的)灯光
-	static GLfloat dim_light[] = { 0.3f, 0.3f, 0.3f, 1.0f };
-	static GLfloat lmodel_ambient[] = { 0.4f, 0.4f, 0.4f, 1.0f };
+	/** 定义光源的属性值 */
+	//GLfloat LightAmbient[] = { 0.4f, 0.4f, 0.4f, 1.0f };    /**< 环境光参数 */
+	GLfloat LightDiffuse[] = { 0.8f, 0.9f, 0.9f, 1.0f };    /**< 漫射光参数 */
+	//GLfloat LightSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f };   /**< 镜面光参数 */
+	
+	
+	GLfloat LightPosition[] = { 0.0f, -1.414f, 1.0f, 0.0f };   /**< 光源位置 */
 
-	//glMaterialfv(GL_FRONT, GL_AMBIENT, mat_specular);
-	//glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_specular);
-	//glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-	//glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-
+	GLfloat lmodel_ambient[] = { 0.5f, 0.5f, 0.5f, 1.0f };
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);//选择光照模型：其包括四项内容
+														   ////全局环境光强度
+														   ////观察点靠近场景还是位于无穷远处
+														   ////对物体的正面和背面是否采用相同的光照计算
+														   ////以及是否将镜面反射颜色同环境颜色和散射颜色分开，并在纹理操作后应用它
+	
+	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);//把无限远的观察点改为局部观察点
 
-	//全局环境光强度
-	//观察点靠近场景还是位于无穷远处
-	//对物体的正面和背面是否采用相同的光照计算
-	//以及是否将镜面反射颜色同环境颜色和散射颜色分开，并在纹理操作后应用它
+	/** 设置光源的属性值 */
+	glLightfv(GL_LIGHT0, GL_POSITION, LightPosition);
+	//glLightfv(GL_LIGHT0, GL_AMBIENT, LightAmbient);     /**< 设置环境光 */
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, LightDiffuse);     /**< 设置漫射光 */
+	//glLightfv(GL_LIGHT0, GL_SPECULAR, LightSpecular);   /**< 设置漫射光 */
 
-	glLightfv(GL_LIGHT0, GL_POSITION, light_position0);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, bright);
-	//glLightfv(GL_LIGHT0, GL_SPECULAR, bright);
-	glLightfv(GL_LIGHT1, GL_POSITION, light_position1);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, bright);
-	glLightfv(GL_LIGHT2, GL_POSITION, light_position2);
-	glLightfv(GL_LIGHT2, GL_DIFFUSE, dim_light);
-	//glLightfv(GL_LIGHT1, GL_SPECULAR, white_light);
-	//glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
 
+	/** 启用光源 */
 	glEnable(GL_LIGHTING);//启用光照 
 	glEnable(GL_LIGHT0);//启用指定光源
-	glEnable(GL_LIGHT1);
-	glEnable(GL_LIGHT2);
+
 }
 
 void RenderingWidget::Render()
@@ -150,7 +145,6 @@ void RenderingWidget::Render()
 	DrawFace(is_draw_face_);
 	DrawTexture(is_draw_texture_);
 }
-
 
 //绘轴
 void RenderingWidget::DrawAxes(bool bv)
@@ -166,7 +160,6 @@ void RenderingWidget::DrawAxes(bool bv)
 	glPushMatrix();
 	glTranslatef(0.7, 0, 0);
 	glRotatef(90, 0.0, 1.0, 0.0);
-	//glutSolidCone(0.02, 0.06, 20, 10);
 	glPopMatrix();
 
 	//y axis
@@ -179,7 +172,6 @@ void RenderingWidget::DrawAxes(bool bv)
 	glPushMatrix();
 	glTranslatef(0.0, 0.7, 0);
 	glRotatef(90, -1.0, 0.0, 0.0);
-	//glutSolidCone(0.02, 0.06, 20, 10);
 	glPopMatrix();
 
 	//z axis
@@ -190,7 +182,6 @@ void RenderingWidget::DrawAxes(bool bv)
 	glEnd();
 	glPushMatrix();
 	glTranslatef(0.0, 0, 0.7);
-	//glutSolidCone(0.02, 0.06, 20, 10);
 	glPopMatrix();
 
 	glColor3f(1.0, 1.0, 1.0);
@@ -205,8 +196,7 @@ void RenderingWidget::DrawPoints(bool bv)
 	}
 
 	const std::vector<HE_vert*>& verts = *(ptr_mesh_->get_vertex_list());
-	//glColor3f(0, 0, 0);
-	//glPointSize(1);
+
 	glBegin(GL_POINTS);
 	for (size_t i = 0; i != ptr_mesh_->num_of_vertex_list(); ++i)
 	{
@@ -390,7 +380,7 @@ void RenderingWidget::mouseMoveEvent(QMouseEvent *e)
 
 	switch (e->buttons())
 	{
-		setCursor(Qt::ClosedHandCursor);
+		setCursor(Qt::ClosedHandCursor);//改变鼠标样式（close）
 
 	case Qt::LeftButton:
 		ptr_arcball_->MouseMove(e->pos());
@@ -541,6 +531,20 @@ void RenderingWidget::WriteMesh()
 	ptr_mesh_->WriteToOBJFile(byfilename.data());
 }
 
+void RenderingWidget::CheckLight()
+{
+	has_lighting_ = !has_lighting_;
+	update();
+}
+
+void RenderingWidget::CheckDrawEdge()
+{
+	is_draw_edge_ = !is_draw_edge_;
+	update();
+}
+
 void RenderingWidget::MntnMesh() {
 	qDebug() << "Maintenance Model !";
 }
+
+

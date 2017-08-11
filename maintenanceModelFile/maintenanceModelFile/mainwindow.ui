@@ -63,6 +63,9 @@
    <addaction name="openAction"/>
    <addaction name="saveAction"/>
    <addaction name="mntnAction"/>
+   <addaction name="separator"/>
+   <addaction name="lightAction"/>
+   <addaction name="viewLineAction"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="openAction">
@@ -99,6 +102,30 @@
    </property>
    <property name="toolTip">
     <string>Maintenance Model File</string>
+   </property>
+  </action>
+  <action name="lightAction">
+   <property name="icon">
+    <iconset resource="mainwindow.qrc">
+     <normaloff>:/images/model-light</normaloff>:/images/model-light</iconset>
+   </property>
+   <property name="text">
+    <string>Light</string>
+   </property>
+   <property name="toolTip">
+    <string>set Light</string>
+   </property>
+  </action>
+  <action name="viewLineAction">
+   <property name="icon">
+    <iconset resource="mainwindow.qrc">
+     <normaloff>:/images/model-line</normaloff>:/images/model-line</iconset>
+   </property>
+   <property name="text">
+    <string>Line View</string>
+   </property>
+   <property name="toolTip">
+    <string>set Line in Model</string>
    </property>
   </action>
  </widget>
@@ -185,6 +212,38 @@
    <signal>triggered()</signal>
    <receiver>openGLWidget</receiver>
    <slot>WriteMesh()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>328</x>
+     <y>278</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lightAction</sender>
+   <signal>triggered()</signal>
+   <receiver>openGLWidget</receiver>
+   <slot>CheckLight()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>328</x>
+     <y>278</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>viewLineAction</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>openGLWidget</receiver>
+   <slot>CheckDrawEdge()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>

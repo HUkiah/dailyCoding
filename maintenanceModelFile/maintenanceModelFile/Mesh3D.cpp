@@ -1404,6 +1404,8 @@ HE_face* Mesh3D::InsertFaceSup(std::vector<HE_vert* >& vec_hv)
 	pfaces_list_->push_back(f);
 	return f;
 }
+
+
 void Mesh3D::UpdateMeshSup(void)
 {
 	
@@ -1434,6 +1436,7 @@ void Mesh3D::UpdateBList(void)
 	}
 	bheList = list;
 }
+//¼ÆËã×é¼þ
 void Mesh3D::computeComponent()
 {
 	if (bheList == NULL)
@@ -1480,6 +1483,7 @@ void Mesh3D::computeComponent()
 		pfaces_list_->at(i)->set_selected(UNSELECTED);
 	}
 }
+//face DFS  Algorithm
 void Mesh3D::FaceDFS(HE_face* facet, int no)
 {
 	facet->set_selected(SELECTED);

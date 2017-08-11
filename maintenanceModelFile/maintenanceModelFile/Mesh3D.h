@@ -108,7 +108,6 @@ public:
 		, pface_(NULL), pnext_(NULL), pprev_(NULL), boundary_flag_(INNER), is_selected_(false)
 	{}
 
-
 	~HE_edge()
 	{}
 
@@ -152,7 +151,7 @@ public:
 	void			set_boundary_flag(BoundaryTag bt) {boundary_flag_=bt;}
 
 	/*-----------add by wang kang at 2013-10-13-------------*/
-	/*-----------modified by shuai   2016-12-13------------*/
+	/*-----------modified by shuai   2016-12-13-------------*/
 	void face_verts(std::vector<HE_vert *>& verts)
 	{
 		verts.clear();

@@ -83,6 +83,10 @@ public slots:
 	void MntnMesh();
 	void ReadMesh();
 	void WriteMesh();
+	void CheckLight();
+	void CheckDrawEdge();
+	//void CheckDrawFace();
+	//void CheckDrawPoint();
 };
 
 #endif // RENDERINGWIDGET_H
