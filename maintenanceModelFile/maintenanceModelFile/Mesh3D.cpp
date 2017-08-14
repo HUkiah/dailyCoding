@@ -20,10 +20,13 @@
 #include <qmath.h>
 #include <QTime>
 #include "globalFunctions.h"
+
 #pragma comment(lib,"ws2_32.lib")
 #define SWAP(a,b,T) {T tmp=(a); (a)=(b); (b)=tmp;}
 #define min(a,b) a<b?a:b
 #define max(a,b) a>b?a:b
+
+
 
 Mesh3D::Mesh3D(void)
 {
@@ -33,7 +36,7 @@ Mesh3D::Mesh3D(void)
 	pedges_list_ = new std::vector<HE_edge*>;
 	bheList = new std::vector<HE_edge*>;
 	iheList = new std::vector<HE_edge*>;
-	
+
 	//input_vertex_list_ = NULL;
 	xmax_ = ymax_ = zmax_ = 1.f;
 	xmin_ = ymin_ = zmin_ = -1.f;
@@ -474,13 +477,9 @@ void Mesh3D::WriteToOBJFile(const char* fouts)
 }
 
 bool Mesh3D::LoadFromSTLFile(const char* fins)
-{
-
-	//支持中文
+{	//支持中文
 	QString filename = QString::fromLocal8Bit(fins);
 	QFile file(filename);
-
-
 	if (!file.open(QIODevice::ReadOnly))
 	{
 
@@ -497,6 +496,7 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 		ClearData();//为什么又执行了一次Clear操作
 		int NUm_vertex = 0, num_facet = 0;
 		std::vector<HE_vert* > s_faceid;
+
 		Vec3f normal;
 		while (!inASCII.atEnd())
 		{
@@ -540,9 +540,25 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 			{
 				if (s_faceid.size() >= 3)
 				{
+					Triangle tri;
+
 					InsertFace(s_faceid)/*->normal_=normal*/;
 					num_facet++;
+					tri.Vertex_1[0] = s_faceid[0]->position().x();
+					tri.Vertex_1[1] = s_faceid[0]->position().y();
+					tri.Vertex_1[2] = s_faceid[0]->position().z();
+
+					tri.Vertex_2[0] = s_faceid[1]->position().x();
+					tri.Vertex_2[1] = s_faceid[1]->position().y();
+					tri.Vertex_2[2] = s_faceid[1]->position().z();
+
+					tri.Vertex_3[0] = s_faceid[2]->position().x();
+					tri.Vertex_3[1] = s_faceid[2]->position().y();
+					tri.Vertex_3[2] = s_faceid[2]->position().z();
+					
+					Tria.push_back(tri);
 				}
+
 				s_faceid.clear();
 			}
 			else if (temp == "normal")
@@ -550,6 +566,28 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 				inASCII >> normal[0] >> normal[1] >> normal[2];
 			}
 		}
+
+		for (int i = 0;i < Tria.size();i++)
+		{
+
+			for (int j = i + 1;j < Tria.size();j++)
+			{
+				if (judge_triangle_topologicalStructure(&Tria[i], &Tria[j]) == INTERSECT)
+				{
+					if (Tria[i].selected == 0)
+					{
+						Tria[i].selected = 1;
+					}
+					if (Tria[j].selected == 0)
+					{
+						Tria[j].selected = 1;
+					}
+				}
+
+			}
+
+		}
+
 	}
 
 	// read Binary .stl file

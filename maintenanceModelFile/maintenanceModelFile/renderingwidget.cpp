@@ -265,9 +265,17 @@ void RenderingWidget::DrawFace(bool bv)
 	const std::vector<HE_face *>& faces = *(ptr_mesh_->get_faces_list());
 	glBegin(GL_TRIANGLES);
 
-	glColor4f(.5, .5, 1.0, 0.9);
+	glColor4f(.6, .5, .5, 0.9);
 	for (size_t i = 0; i < faces.size(); ++i)
 	{
+		if (ptr_mesh_->Tria[i].selected==1)
+		{
+			glColor3f(0.8, 0, 0);
+		}
+		else
+		{
+			glColor3f(0, 0.8, 0);
+		}
 
 		HE_edge *pedge(faces.at(i)->pedge_);
 		do

@@ -30,6 +30,7 @@ extern float scaleV;
 extern float scaleT;
 extern int sss;
 extern int fildID;
+
 template<class object>
 void SafeDelete(object *ptr)
 {

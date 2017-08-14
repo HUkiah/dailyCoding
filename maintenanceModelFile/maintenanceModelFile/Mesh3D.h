@@ -1,15 +1,17 @@
-#pragma once
+#ifndef MESH3D_MESHPRINT
+#define MESH3D_MESHPRINT
 
 #include <vector>
 #include <map>
 #include "Vec.h"
 #include <set>
+#include "Triangle.h"
 
 // forward declarations of mesh classes
 class HE_vert;
 class HE_edge;
 class HE_face;
-
+class Triangle;
 
 using trimesh::point;
 
@@ -32,7 +34,6 @@ enum BoundaryTag
 	INNER,
 	TO_SPLIT
 };
-
 /*!
 *	The basic vertex class for half-edge structure.
 */
@@ -205,6 +206,7 @@ public:
 		} while (pedge != pedge_);
 	}
 };
+
 struct comVertex
 {
 	bool operator ()(HE_vert* a, HE_vert* b)const
@@ -228,9 +230,7 @@ struct comVertex
 		return false;
 	}
 };
-/*!
 
-*/
 class Mesh3D
 {
 	// type definitions
@@ -251,6 +251,8 @@ private:
 	std::vector<HE_edge*>	*bheList;		// list of boundary half egdes
 	std::vector<HE_edge*>	*iheList;		// list of inner half egdes
 	std::vector<std::vector<HE_edge*>>   bLoop;
+	
+	
 	int no_loop;
 	std::set<HE_vert*,comVertex>   input_vertex_list_;// !< strore STL input vertex
 	// mesh info
@@ -266,6 +268,7 @@ public:
 	//! associate two end vertex with its edge: only useful in creating mesh
 	std::map<std::pair<HE_vert*, HE_vert* >, HE_edge* >    edgemap_;
 
+	std::vector<Triangle> Tria; //用来判断三角面的位置关系
 	//! constructor
 	Mesh3D(void);
 
@@ -535,3 +538,5 @@ public:
 	void FaceDFS(HE_face* facet, int no);
 	std::vector<HE_edge*>* GetBhelist() { return bheList; }
 };
+
+#endif //MESH3D_MESHPRINT
