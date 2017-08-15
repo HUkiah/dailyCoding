@@ -14,8 +14,8 @@ RenderingWidget::RenderingWidget(QWidget *parent)
 	ptr_arcball_ = new CArcBall(width(), height());
 	ptr_arcball_module_ = new CArcBall(width(), height());
 
-	ptr_mesh_ = new Mesh3D();
-	
+	ptr_mesh_ = new MeshBase();
+
 	is_move_module_ = (false);
 	is_load_texture_ = false;
 	is_draw_axes_ = false;
@@ -39,7 +39,7 @@ void RenderingWidget::initializeGL()
 	glShadeModel(GL_SMOOTH);//平滑渐变 对应的GL_FLAT是单色方式（两点间取一点的颜色着色）
 	glEnable(GL_DOUBLEBUFFER);//启用双缓冲
 
-	//glEnable(GL_CULL_FACE);//开启剔除操作效果 避免不必要的渲染 
+							  //glEnable(GL_CULL_FACE);//开启剔除操作效果 避免不必要的渲染 
 
 	glEnable(GL_COLOR_MATERIAL);//用颜色材质,使我们可以用颜色来贴物体
 	glColorMaterial(GL_FRONT, GL_DIFFUSE);//最开始颜色材质对应的是ambient(环境)的。所以要给为diffuse(传播)
@@ -91,7 +91,7 @@ void RenderingWidget::paintGL()
 	glMatrixMode(GL_MODELVIEW);//(将要设置模型空间位置)
 	glLoadIdentity();//(设置其为单位矩阵)
 
-	register vec eyepos = eye_distance_*eye_direction_; 
+	register vec eyepos = eye_distance_*eye_direction_;
 	gluLookAt(eyepos[0], eyepos[1], eyepos[2],//eye position
 		eye_goal_[0], eye_goal_[1], eye_goal_[2],//eye angel
 		0.0, 1.0, 0.0);// Y coordinate
@@ -109,9 +109,9 @@ void RenderingWidget::SetLight()
 	/** 定义光源的属性值 */
 	//GLfloat LightAmbient[] = { 0.4f, 0.4f, 0.4f, 1.0f };    /**< 环境光参数 */
 	GLfloat LightDiffuse[] = { 0.8f, 0.9f, 0.9f, 1.0f };    /**< 漫射光参数 */
-	//GLfloat LightSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f };   /**< 镜面光参数 */
-	
-	
+															//GLfloat LightSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f };   /**< 镜面光参数 */
+
+
 	GLfloat LightPosition[] = { 0.0f, -1.414f, 1.0f, 0.0f };   /**< 光源位置 */
 
 	GLfloat lmodel_ambient[] = { 0.5f, 0.5f, 0.5f, 1.0f };
@@ -120,17 +120,17 @@ void RenderingWidget::SetLight()
 														   ////观察点靠近场景还是位于无穷远处
 														   ////对物体的正面和背面是否采用相同的光照计算
 														   ////以及是否将镜面反射颜色同环境颜色和散射颜色分开，并在纹理操作后应用它
-	
+
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);//把无限远的观察点改为局部观察点
 
-	/** 设置光源的属性值 */
+														/** 设置光源的属性值 */
 	glLightfv(GL_LIGHT0, GL_POSITION, LightPosition);
 	//glLightfv(GL_LIGHT0, GL_AMBIENT, LightAmbient);     /**< 设置环境光 */
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, LightDiffuse);     /**< 设置漫射光 */
-	//glLightfv(GL_LIGHT0, GL_SPECULAR, LightSpecular);   /**< 设置漫射光 */
+														//glLightfv(GL_LIGHT0, GL_SPECULAR, LightSpecular);   /**< 设置漫射光 */
 
 
-	/** 启用光源 */
+														/** 启用光源 */
 	glEnable(GL_LIGHTING);//启用光照 
 	glEnable(GL_LIGHT0);//启用指定光源
 
@@ -216,41 +216,16 @@ void RenderingWidget::DrawEdge(bool bv)
 	}
 
 	const std::vector<HE_edge *>& edges = *(ptr_mesh_->get_edges_list());
-	const std::vector<HE_edge *>& bedges = *(ptr_mesh_->get_bedges_list());
 
 	for (size_t i = 0; i != edges.size(); ++i)
 	{
 		glBegin(GL_LINES);
 		glColor3f(0.0, 0.0, 0.0);
-		glNormal3fv(edges[i]->start_->normal().data());
-		glVertex3fv((edges[i]->start_->position()*scaleV).data());
-		glNormal3fv(edges[i]->pvert_->normal().data());
-		glVertex3fv((edges[i]->pvert_->position()*scaleV).data());
+		glVertex3fv((edges[i]->vert_->position()*scaleV).data());
 		glEnd();
 	}
 
-	for (size_t i = 0; i != bedges.size(); ++i)
-	{
-		glBegin(GL_LINES);
-		glColor3f(1.0, 0.0, 0.0);
-		glNormal3fv(bedges[i]->start_->normal().data());
-		glVertex3fv((bedges[i]->start_->position()*scaleV).data());
-		glNormal3fv(bedges[i]->pvert_->normal().data());
-		glVertex3fv((bedges[i]->pvert_->position()*scaleV).data());
-		glEnd();
-	}
-	auto bl = ptr_mesh_->GetBLoop();
-	for (size_t i = 0; i != bl.size(); i++)
-	{
-		glBegin(GL_LINE_LOOP);
-		glColor3f(1.0, 0.0, 0.0);
-		for (int j = 0; j < bl[i].size(); j++)
-		{
-			glNormal3fv(bl[i][j]->start_->normal().data());
-			glVertex3fv((bl[i][j]->start_->position()*scaleV).data());
-		}
-		glEnd();
-	}
+
 }
 void RenderingWidget::DrawFace(bool bv)
 {
@@ -265,17 +240,9 @@ void RenderingWidget::DrawFace(bool bv)
 	const std::vector<HE_face *>& faces = *(ptr_mesh_->get_faces_list());
 	glBegin(GL_TRIANGLES);
 
-	glColor4f(.6, .5, .5, 0.9);
+	glColor4f(.8, .5, .5, 0.9);
 	for (size_t i = 0; i < faces.size(); ++i)
 	{
-		if (ptr_mesh_->Tria[i].selected==1)
-		{
-			glColor3f(0.8, 0, 0);
-		}
-		else
-		{
-			glColor3f(0, 0.8, 0);
-		}
 
 		HE_edge *pedge(faces.at(i)->pedge_);
 		do
@@ -284,16 +251,17 @@ void RenderingWidget::DrawFace(bool bv)
 			{
 				break;
 			}
-			if (pedge == NULL || pedge->pface_->id() != faces.at(i)->id())
+			if (pedge == NULL || pedge->face_->id() != faces.at(i)->id())
 			{
 				faces.at(i)->pedge_ = NULL;
 				qDebug() << faces.at(i)->id() << "facet display wrong";
 				break;
 			}
-			glNormal3fv(pedge->pvert_->normal().data());
-			glVertex3fv((pedge->pvert_->position()*scaleV).data());
+			glVertex3fv((pedge->vert_->position()*scaleV).data());
 			pedge = pedge->pnext_;
 		} while (pedge != faces.at(i)->pedge_);
+
+
 
 	}
 	glEnd();
@@ -320,9 +288,7 @@ void RenderingWidget::DrawTexture(bool bv)
 		do
 		{
 			/* 请在此处绘制纹理，添加纹理坐标即可 */
-			glTexCoord2fv(pedge->pvert_->texCoord_.data());
-			glNormal3fv(pedge->pvert_->normal().data());
-			glVertex3fv((pedge->pvert_->position()*scaleV).data());
+			glVertex3fv((pedge->vert_->position()*scaleV).data());
 
 			pedge = pedge->pnext_;
 
@@ -359,8 +325,6 @@ void RenderingWidget::DrawGrid(bool bv)
 
 void RenderingWidget::mousePressEvent(QMouseEvent *e)
 {
-	qDebug() << "Mouse Press!!!";
-
 	switch (e->button())
 	{
 	case Qt::LeftButton:
@@ -384,7 +348,6 @@ void RenderingWidget::mousePressEvent(QMouseEvent *e)
 }
 void RenderingWidget::mouseMoveEvent(QMouseEvent *e)
 {
-	qDebug() << "Mouse Move!!!";
 
 	switch (e->buttons())
 	{
@@ -489,7 +452,7 @@ void RenderingWidget::ReadMesh()
 
 	if (fileinfo.suffix() == "obj")
 	{
-		ptr_mesh_->LoadFromOBJFile(byfilename.data());
+	//	ptr_mesh_->LoadFromOBJFile(byfilename.data());
 	}
 	else if (fileinfo.suffix() == "stl" || fileinfo.suffix() == "STL")
 	{
@@ -501,10 +464,10 @@ void RenderingWidget::ReadMesh()
 	//emit(operatorInfo(QString("Read Mesh from") + filename + QString(" Done")));
 	//emit(meshInfo(ptr_mesh_->num_of_vertex_list(), ptr_mesh_->num_of_edge_list(), ptr_mesh_->num_of_face_list()));
 
-
-	float max_ = ptr_mesh_->getBoundingBox().at(0).at(0);
-	max_ = max_ > ptr_mesh_->getBoundingBox().at(0).at(1) ? max_ : ptr_mesh_->getBoundingBox().at(0).at(1);
-	max_ = max_ > ptr_mesh_->getBoundingBox().at(0).at(2) ? max_ : ptr_mesh_->getBoundingBox().at(0).at(2);
+ 
+   	float max_ = ptr_mesh_->getBoundingBox().at(0).at(0);
+   	max_ = max_ > ptr_mesh_->getBoundingBox().at(0).at(1) ? max_ : ptr_mesh_->getBoundingBox().at(0).at(1);
+  	max_ = max_ > ptr_mesh_->getBoundingBox().at(0).at(2) ? max_ : ptr_mesh_->getBoundingBox().at(0).at(2);
 
 	//updateGL();
 	update();
@@ -517,10 +480,10 @@ void RenderingWidget::ReadMesh()
 													//qDebug() << "法向错误面片个数："<<sss;
 	qDebug() << "load model end at" << time;
 	qDebug() << ptr_mesh_->get_faces_list()->size();
-	qDebug() << ptr_mesh_->getBoundingBox().at(0)[0] * 2 << ptr_mesh_->getBoundingBox().at(0)[1] * 2 << ptr_mesh_->getBoundingBox().at(0)[2];
+// 	qDebug() << ptr_mesh_->getBoundingBox().at(0)[0] * 2 << ptr_mesh_->getBoundingBox().at(0)[1] * 2 << ptr_mesh_->getBoundingBox().at(0)[2];
 	//ptr_arcball_->PlaceBall(scaleV);
 	scaleT = scaleV;
-	eye_distance_ = 2 * max_;
+	//eye_distance_ = 2 * max_;
 }
 
 void RenderingWidget::WriteMesh()
@@ -536,7 +499,7 @@ void RenderingWidget::WriteMesh()
 	if (filename.isEmpty())
 		return;
 	QByteArray byfilename = filename.toLocal8Bit();
-	ptr_mesh_->WriteToOBJFile(byfilename.data());
+//	ptr_mesh_->WriteToOBJFile(byfilename.data());
 }
 
 void RenderingWidget::CheckLight()

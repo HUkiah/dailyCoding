@@ -162,6 +162,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainwindow.cpp" />
     <ClCompile Include="Mesh3D.cpp" />
+    <ClCompile Include="MeshBase.cpp" />
     <ClCompile Include="renderingwidget.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -217,6 +218,7 @@
     <ClInclude Include="GeneratedFiles\ui_mainwindow.h" />
     <ClInclude Include="globalFunctions.h" />
     <ClInclude Include="Mesh3D.h" />
+    <ClInclude Include="MeshBase.h" />
     <ClInclude Include="Triangle.h" />
     <ClInclude Include="Vec.h" />
     <CustomBuild Include="renderingwidget.h">

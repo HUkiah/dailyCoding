@@ -260,10 +260,7 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 			return NONINTERSECT;
 		}
 	}
-	if (p1_tri2_vertex1 == 0 || p1_tri2_vertex2 == 0 || p1_tri2_vertex3 == 0)
-	{
-		return NONINTERSECT;
-	}
+
 	//此处判断三角形共面的两点是否三角形上的一边
 	if (p1_tri2_vertex1 == 0 && (p1_tri2_vertex2 == 0 || p1_tri2_vertex3 == 0))
 	{
@@ -330,11 +327,6 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 	}
 
 	if (p2_tri1_vertex1 < 0 && p2_tri1_vertex2 < 0 && p2_tri1_vertex3 < 0)
-	{
-		return NONINTERSECT;
-	}
-
-	if (p2_tri1_vertex1 == 0 || p2_tri1_vertex2 == 0 || p2_tri1_vertex3 == 0)
 	{
 		return NONINTERSECT;
 	}
@@ -497,5 +489,7 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 		return NONINTERSECT;
 	}
 }
+
+//判断两个三角形是否是同一个三角形
 
 #endif //TRIANGLE_HAN

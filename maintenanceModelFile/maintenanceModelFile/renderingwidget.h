@@ -5,7 +5,7 @@
 #include <QEvent>
 #include "ArcBall.h"
 #include "Vec.h"
-#include "Mesh3D.h"
+#include "MeshBase.h"
 
 using trimesh::vec;
 using trimesh::point;
@@ -26,7 +26,7 @@ public:
 	CArcBall					*ptr_arcball_;
 	CArcBall					*ptr_arcball_module_;
 
-	Mesh3D						*ptr_mesh_;
+	MeshBase						*ptr_mesh_;
 	
 	//Texture
 	GLuint						texture_[1];

@@ -41,6 +41,8 @@ class HE_vert
 {
 public:
 	int		id_;
+	bool    FaceIntersect;  //判断此面是否与其他面相交的flag
+
 	int		id_in_STL;		//  USE in STL input
 	point	position_;		//!< vertex position
 	Vec3f	normal_;		//!< vertex normal
@@ -58,7 +60,7 @@ public:
 	std::vector<Vec3f> helper;
 public:
 	HE_vert(const Vec3f& v)
-		: id_(-1), position_(v), pedge_(NULL), degree_(0), boundary_flag_(INNER), selected_(UNSELECTED)
+		: id_(-1), FaceIntersect(false), position_(v), pedge_(NULL), degree_(0), boundary_flag_(INNER), selected_(UNSELECTED)
 		, color_(255.f / 255.f, 215.f / 255.f, 0.f/ 255.f, 1.f),neighborIdx()
 	{}
 
@@ -125,6 +127,8 @@ class HE_face
 {
 public:
 	int			id_;
+	bool		FaceIntersect;//面相交的flag
+
 	HE_edge		*pedge_;		//!< one of the half-edges_list bordering the face
 	Vec3f		normal_;		//!< face normal
 	int			valence_;		//!< the number of edges_list
@@ -134,7 +138,7 @@ public:
 	int com_flag;
 public:
 	HE_face()
-		: id_(-1), pedge_(NULL), valence_(0), selected_(UNSELECTED), boundary_flag_(INNER), normal_(0,0,0),com_flag(-1)
+		: id_(-1),FaceIntersect(false), pedge_(NULL), valence_(0), selected_(UNSELECTED), boundary_flag_(INNER), normal_(0,0,0),com_flag(-1)
 	{}
 
 	~HE_face()

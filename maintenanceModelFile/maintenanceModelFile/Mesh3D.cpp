@@ -203,6 +203,8 @@ HE_face* Mesh3D::InsertFace(std::vector<HE_vert* >& vec_hv)
 	}
 
 	HE_face *pface = new HE_face;
+	pface->FaceIntersect = vec_hv[0]->FaceIntersect;
+	///////////////////////////////////////////////////
 	pface->valence_ = vsize;
 	//HE_edge *bhe[3];
 	HE_edge *he1 = NULL, *he2 = NULL, *he3 = NULL, *he1_pair_ = NULL, *he2_pair_ = NULL, *he3_pair_ = NULL;
@@ -282,6 +284,7 @@ HE_face* Mesh3D::InsertFace(std::vector<HE_vert* >& vec_hv)
 bool Mesh3D::LoadFromOBJFile(const char* fins)//读取obj文件
 {
 	FILE *pfile = fopen(fins, "r");
+	int n = 0;
 
 	char *tok;
 	//char *tok_tok;
@@ -345,6 +348,38 @@ bool Mesh3D::LoadFromOBJFile(const char* fins)//读取obj文件
 				}
 				if ((int)s_faceid.size() >= 3)
 				{
+
+					Triangle tri;
+					tri.Vertex_1[0] = s_faceid[0]->position().x();
+					tri.Vertex_1[1] = s_faceid[0]->position().y();
+					tri.Vertex_1[2] = s_faceid[0]->position().z();
+
+					tri.Vertex_2[0] = s_faceid[1]->position().x();
+					tri.Vertex_2[1] = s_faceid[1]->position().y();
+					tri.Vertex_2[2] = s_faceid[1]->position().z();
+
+					tri.Vertex_3[0] = s_faceid[2]->position().x();
+					tri.Vertex_3[1] = s_faceid[2]->position().y();
+					tri.Vertex_3[2] = s_faceid[2]->position().z();
+
+					Tria.push_back(tri);
+					//暂时除去相交的面 coding
+					for (int i = 0;i < Tria.size() - 1;++i)
+					{
+						if (judge_triangle_topologicalStructure(&tri, &Tria[i]) == INTERSECT)
+						{
+							n++;
+							s_faceid[0]->FaceIntersect = true;
+						}
+						else
+						{
+							s_faceid[0]->FaceIntersect = false;
+
+						}
+
+					}
+
+
 					InsertFace(s_faceid);
 				}
 			}
@@ -439,7 +474,7 @@ void Mesh3D::WriteToOBJFile(const char* fouts)
 	std::ofstream fout(fouts);
 
 	fout<<"g object\n";
-	fout.precision(16);
+	fout.precision(8);
 	//output coordinates of each vertex
 	VERTEX_ITER viter = pvertices_list_->begin();
 	for (;viter!=pvertices_list_->end(); viter++) 
@@ -477,7 +512,9 @@ void Mesh3D::WriteToOBJFile(const char* fouts)
 }
 
 bool Mesh3D::LoadFromSTLFile(const char* fins)
-{	//支持中文
+{
+	int n = 0;
+	//支持中文
 	QString filename = QString::fromLocal8Bit(fins);
 	QFile file(filename);
 	if (!file.open(QIODevice::ReadOnly))
@@ -541,9 +578,6 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 				if (s_faceid.size() >= 3)
 				{
 					Triangle tri;
-
-					InsertFace(s_faceid)/*->normal_=normal*/;
-					num_facet++;
 					tri.Vertex_1[0] = s_faceid[0]->position().x();
 					tri.Vertex_1[1] = s_faceid[0]->position().y();
 					tri.Vertex_1[2] = s_faceid[0]->position().z();
@@ -557,6 +591,25 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 					tri.Vertex_3[2] = s_faceid[2]->position().z();
 					
 					Tria.push_back(tri);
+					//暂时除去相交的面 coding
+					for (int i=0;i<Tria.size()-1;++i)
+					{
+						if (judge_triangle_topologicalStructure(&tri,&Tria[i])==INTERSECT)
+						{
+							n++;
+							s_faceid[0]->FaceIntersect = true;							
+						}
+						else
+						{
+							s_faceid[0]->FaceIntersect = false;
+							
+						}
+
+					}
+					
+
+					InsertFace(s_faceid)/*->normal_=normal*/;
+					num_facet++;
 				}
 
 				s_faceid.clear();
@@ -567,7 +620,7 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 			}
 		}
 
-		for (int i = 0;i < Tria.size();i++)
+		/*for (int i = 0;i < Tria.size();i++)
 		{
 
 			for (int j = i + 1;j < Tria.size();j++)
@@ -586,8 +639,9 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 
 			}
 
-		}
+		}*/
 
+		qDebug() << "Tria=" << Tria.size()<<"n="<<n << "\n";
 	}
 
 	// read Binary .stl file
