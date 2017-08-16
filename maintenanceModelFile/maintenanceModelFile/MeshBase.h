@@ -193,6 +193,10 @@ public:
 	HE_face* InsertFace(std::vector<HE_vert* >& vec_hv);
 
 public:
+
+	//! unify mesh
+	void Unify(float size);
+
 	bool LoadFromSTLFile(const char * fins);
 
 	//! clear all the data

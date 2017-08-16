@@ -6,6 +6,7 @@
 #include <iostream>
 #include "QDataStream"
 #include <winsock.h>
+#include "globalFunctions.h"
 
 MeshBase::MeshBase(void)
 {
@@ -194,6 +195,38 @@ HE_face* MeshBase::InsertFace(std::vector<HE_vert* >& vec_hv)
 
 }
 
+//重置模型位置
+void MeshBase::Unify(float size)
+{
+	//qDebug() << "z position" << zmax_;
+	float scaleX = xmax_ - xmin_;
+	float scaleY = ymax_ - ymin_;
+	float scaleZ = zmax_ - zmin_;
+	float scaleMax;
+
+	if (scaleX < scaleY)
+	{
+		scaleMax = scaleY;
+	}
+	else
+	{
+		scaleMax = scaleX;
+	}
+	if (scaleMax < scaleZ)
+	{
+		scaleMax = scaleZ;
+	}
+	 	//scaleV = size / scaleMax;
+	 	//scaleT = scaleV;
+	 	//scaleV = 1;
+	Vec3f centerPos((xmin_ + xmax_) / 2.0, (ymin_ + ymax_) / 2.0, (zmin_));
+	//Vec3f centerPos(xmin_ , ymin_, zmin_);
+	for (size_t i = 0; i != pvertices_list_->size(); i++)
+	{
+		pvertices_list_->at(i)->position_ = (pvertices_list_->at(i)->position_ - centerPos)*scaleT;
+	}
+}
+
 bool MeshBase::LoadFromSTLFile(const char* fins)
 {
 	//支持中文
@@ -338,6 +371,7 @@ bool MeshBase::LoadFromSTLFile(const char* fins)
 	}
 
 	file.close();
+	Unify(2.f);
 
 	return isValid();;
 }

@@ -216,43 +216,17 @@ void RenderingWidget::DrawEdge(bool bv)
 	}
 
 	const std::vector<HE_edge *>& edges = *(ptr_mesh_->get_edges_list());
-	const std::vector<HE_edge *>& bedges = *(ptr_mesh_->get_bedges_list());
 
 	for (size_t i = 0; i != edges.size(); ++i)
 	{
 		glBegin(GL_LINES);
 		glColor3f(0.0, 0.0, 0.0);
-		glNormal3fv(edges[i]->start_->normal().data());
-		glVertex3fv((edges[i]->start_->position()*scaleV).data());
-		glNormal3fv(edges[i]->pvert_->normal().data());
-		glVertex3fv((edges[i]->pvert_->position()*scaleV).data());
+		glVertex3fv((edges[i]->vert_->position()*scaleV).data());
 		glEnd();
 	}
 
-	for (size_t i = 0; i != bedges.size(); ++i)
-	{
-		glBegin(GL_LINES);
-		glColor3f(1.0, 0.0, 0.0);
-		glNormal3fv(bedges[i]->start_->normal().data());
-		glVertex3fv((bedges[i]->start_->position()*scaleV).data());
-		glNormal3fv(bedges[i]->pvert_->normal().data());
-		glVertex3fv((bedges[i]->pvert_->position()*scaleV).data());
-		glEnd();
-	}
-	auto bl = ptr_mesh_->GetBLoop();
-	for (size_t i = 0; i != bl.size(); i++)
-	{
-		glBegin(GL_LINE_LOOP);
-		glColor3f(1.0, 0.0, 0.0);
-		for (int j = 0; j < bl[i].size(); j++)
-		{
-			glNormal3fv(bl[i][j]->start_->normal().data());
-			glVertex3fv((bl[i][j]->start_->position()*scaleV).data());
-		}
-		glEnd();
-	}
+
 }
-
 void RenderingWidget::DrawFace(bool bv)
 {
 	if (!bv || ptr_mesh_ == NULL)
@@ -269,50 +243,23 @@ void RenderingWidget::DrawFace(bool bv)
 	glColor4f(.8, .5, .5, 0.9);
 	for (size_t i = 0; i < faces.size(); ++i)
 	{
-		if (faces[i]->FaceIntersect)
-		{
-			glColor3f(0.8, 0, 0);
-			HE_edge *pedge(faces.at(i)->pedge_);
-			do
-			{
-				if (pedge == NULL)
-				{
-					break;
-				}
-				if (pedge == NULL || pedge->pface_->id() != faces.at(i)->id())
-				{
-					faces.at(i)->pedge_ = NULL;
-					qDebug() << faces.at(i)->id() << "facet display wrong";
-					break;
-				}
-				glNormal3fv(pedge->pvert_->normal().data());
-				glVertex3fv((pedge->pvert_->position()*scaleV).data());
-				pedge = pedge->pnext_;
-			} while (pedge != faces.at(i)->pedge_);
-		}
-		else
-		{
-			glColor3f(0, 0.8, 0);
 
-
-			HE_edge *pedge(faces.at(i)->pedge_);
-			do
+		HE_edge *pedge(faces.at(i)->pedge_);
+		do
+		{
+			if (pedge == NULL)
 			{
-				if (pedge == NULL)
-				{
-					break;
-				}
-				if (pedge == NULL || pedge->pface_->id() != faces.at(i)->id())
-				{
-					faces.at(i)->pedge_ = NULL;
-					qDebug() << faces.at(i)->id() << "facet display wrong";
-					break;
-				}
-				glNormal3fv(pedge->pvert_->normal().data());
-				glVertex3fv((pedge->pvert_->position()*scaleV).data());
-				pedge = pedge->pnext_;
-			} while (pedge != faces.at(i)->pedge_);
-		}
+				break;
+			}
+			if (pedge == NULL || pedge->face_->id() != faces.at(i)->id())
+			{
+				faces.at(i)->pedge_ = NULL;
+				qDebug() << faces.at(i)->id() << "facet display wrong";
+				break;
+			}
+			glVertex3fv((pedge->vert_->position()*scaleV).data());
+			pedge = pedge->pnext_;
+		} while (pedge != faces.at(i)->pedge_);
 
 
 
@@ -341,9 +288,7 @@ void RenderingWidget::DrawTexture(bool bv)
 		do
 		{
 			/* 请在此处绘制纹理，添加纹理坐标即可 */
-			glTexCoord2fv(pedge->pvert_->texCoord_.data());
-			glNormal3fv(pedge->pvert_->normal().data());
-			glVertex3fv((pedge->pvert_->position()*scaleV).data());
+			glVertex3fv((pedge->vert_->position()*scaleV).data());
 
 			pedge = pedge->pnext_;
 
@@ -507,7 +452,7 @@ void RenderingWidget::ReadMesh()
 
 	if (fileinfo.suffix() == "obj")
 	{
-		ptr_mesh_->LoadFromOBJFile(byfilename.data());
+	//	ptr_mesh_->LoadFromOBJFile(byfilename.data());
 	}
 	else if (fileinfo.suffix() == "stl" || fileinfo.suffix() == "STL")
 	{
@@ -519,10 +464,10 @@ void RenderingWidget::ReadMesh()
 	//emit(operatorInfo(QString("Read Mesh from") + filename + QString(" Done")));
 	//emit(meshInfo(ptr_mesh_->num_of_vertex_list(), ptr_mesh_->num_of_edge_list(), ptr_mesh_->num_of_face_list()));
 
-
-	float max_ = ptr_mesh_->getBoundingBox().at(0).at(0);
-	max_ = max_ > ptr_mesh_->getBoundingBox().at(0).at(1) ? max_ : ptr_mesh_->getBoundingBox().at(0).at(1);
-	max_ = max_ > ptr_mesh_->getBoundingBox().at(0).at(2) ? max_ : ptr_mesh_->getBoundingBox().at(0).at(2);
+ 
+   	float max_ = ptr_mesh_->getBoundingBox().at(0).at(0);
+   	max_ = max_ > ptr_mesh_->getBoundingBox().at(0).at(1) ? max_ : ptr_mesh_->getBoundingBox().at(0).at(1);
+  	max_ = max_ > ptr_mesh_->getBoundingBox().at(0).at(2) ? max_ : ptr_mesh_->getBoundingBox().at(0).at(2);
 
 	//updateGL();
 	update();
@@ -535,10 +480,10 @@ void RenderingWidget::ReadMesh()
 													//qDebug() << "法向错误面片个数："<<sss;
 	qDebug() << "load model end at" << time;
 	qDebug() << ptr_mesh_->get_faces_list()->size();
-	qDebug() << ptr_mesh_->getBoundingBox().at(0)[0] * 2 << ptr_mesh_->getBoundingBox().at(0)[1] * 2 << ptr_mesh_->getBoundingBox().at(0)[2];
+// 	qDebug() << ptr_mesh_->getBoundingBox().at(0)[0] * 2 << ptr_mesh_->getBoundingBox().at(0)[1] * 2 << ptr_mesh_->getBoundingBox().at(0)[2];
 	//ptr_arcball_->PlaceBall(scaleV);
 	scaleT = scaleV;
-	eye_distance_ = 2 * max_;
+	//eye_distance_ = 2 * max_;
 }
 
 void RenderingWidget::WriteMesh()
@@ -554,7 +499,7 @@ void RenderingWidget::WriteMesh()
 	if (filename.isEmpty())
 		return;
 	QByteArray byfilename = filename.toLocal8Bit();
-	ptr_mesh_->WriteToOBJFile(byfilename.data());
+//	ptr_mesh_->WriteToOBJFile(byfilename.data());
 }
 
 void RenderingWidget::CheckLight()
