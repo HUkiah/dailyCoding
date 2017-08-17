@@ -138,12 +138,12 @@ void RenderingWidget::SetLight()
 
 void RenderingWidget::Render()
 {
-	DrawAxes(is_draw_axes_);
+	//DrawAxes(is_draw_axes_);
 	DrawGrid(is_draw_grid_);
-	DrawPoints(is_draw_point_);
-	DrawEdge(is_draw_edge_);
+	//DrawPoints(is_draw_point_);
+	//DrawEdge(is_draw_edge_);
 	DrawFace(is_draw_face_);
-	DrawTexture(is_draw_texture_);
+	//DrawTexture(is_draw_texture_);
 }
 
 //»æÖá
@@ -269,7 +269,7 @@ void RenderingWidget::DrawFace(bool bv)
 	glColor4f(.8, .5, .5, 0.9);
 	for (size_t i = 0; i < faces.size(); ++i)
 	{
-		if (faces[i]->FaceIntersect)
+		if (ptr_mesh_->Tria[i].selected==1)
 		{
 			glColor3f(0.8, 0, 0);
 			HE_edge *pedge(faces.at(i)->pedge_);
@@ -486,7 +486,7 @@ void RenderingWidget::ReadMesh()
 	has_lighting_ = true;
 	QString filename = QFileDialog::
 		getOpenFileName(this, tr("Read Mesh"),
-			"Resources/models", tr("Meshes (*.obj *.stl)"));
+			"C:/Users/h/Desktop/", tr("Meshes (*.obj *.stl)"));
 
 	if (filename.isEmpty())
 	{

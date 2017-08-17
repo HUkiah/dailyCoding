@@ -50,6 +50,9 @@ void Mesh3D::ClearData(void)
 	ClearVertex();
 	ClearEdges();
 	ClearFaces();
+
+	Tria.clear();
+	
 	input_vertex_list_.clear();
 	edgemap_.clear();
 	xmax_ = ymax_ = zmax_ = 1.f;
@@ -363,7 +366,7 @@ bool Mesh3D::LoadFromOBJFile(const char* fins)//读取obj文件
 
 
 					//此时已决定不再将不绘制的面进行比较
-					for (int j = 0;j < Tria.size();j++)
+					for (int j = 1;j < Tria.size();j++)
 					{
 
 						//此时已决定不再将不合适的面绘制出来
@@ -599,33 +602,6 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 					tri.Vertex_3[1] = s_faceid[2]->position().y();
 					tri.Vertex_3[2] = s_faceid[2]->position().z();
 					
-			
-					//此时已决定不再将不绘制的面进行比较
-					for (int j =0;j < Tria.size();j++)
-					{
-
-						//此时已决定不再将不合适的面绘制出来
-						if (Tria[j].selected == 1)
-						{
-							continue;
-						}
-						//如果要比对的面是目标面，周围的面则跳过
-						if (is_pointTri_within_triangle_vectex(&tri, Tria[j].Vertex_1) || is_pointTri_within_triangle_vectex(&tri, Tria[j].Vertex_2) || is_pointTri_within_triangle_vectex(&tri, Tria[j].Vertex_3))
-						{
-							continue;
-						}
-						if (judge_triangle_topologicalStructure(&tri, &Tria[j]) == INTERSECT)
-						{
-							n++;
-								tri.selected = 1;
-								
-								//pfaces_list_[j][0]->FaceIntersect = true;
-								s_faceid[0]->FaceIntersect = true;
-
-						}
-
-					}
-					
 					Tria.push_back(tri);
 
 					InsertFace(s_faceid)/*->normal_=normal*/;
@@ -639,29 +615,37 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 				inASCII >> normal[0] >> normal[1] >> normal[2];
 			}
 		}
-
-		/*for (int i = 0;i < Tria.size();i++)
-		{
-
-			for (int j = i + 1;j < Tria.size();j++)
-			{
-				if (judge_triangle_topologicalStructure(&Tria[i], &Tria[j]) == INTERSECT)
-				{
-					if (Tria[i].selected == 0)
+					for (int i=0;i<Tria.size();i++)
 					{
-						Tria[i].selected = 1;
+						//此时已决定不再将不绘制的面进行比较
+						for (int j = 0;j < Tria.size();j++)
+						{
+							//此时已决定不再将不合适的面绘制出来
+							/*if (Tria[j].selected == 1)
+							{
+							continue;
+							}*/
+							//如果要比对的面是目标面，周围的面则跳过,包括它本身
+							if (is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_1) || is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_2) || is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_3))
+							{
+								continue;
+							}
+							n++;
+							if (judge_triangle_topologicalStructure(&Tria[i], &Tria[j]) == INTERSECT)
+							{
+
+								Tria[i].selected = 1;
+								break;
+								//pfaces_list_[j][0]->FaceIntersect = true;
+								//s_faceid[0]->FaceIntersect = true;
+
+							}
+
+						}
+
 					}
-					if (Tria[j].selected == 0)
-					{
-						Tria[j].selected = 1;
-					}
-				}
 
-			}
-
-		}*/
-
-		qDebug() << "Tria=" << Tria.size()<<"n="<<n << "\n";
+		qDebug() << "w Tria=" << Tria.size()<<"n="<<n << "\n";
 	}
 
 	// read Binary .stl file

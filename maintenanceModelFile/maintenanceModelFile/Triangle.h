@@ -1,6 +1,8 @@
+
 #ifndef TRIANGLE_HAN
 #define TRIANGLE_HAN
 
+#include <QDebug>
 
 typedef float float3[3];
 
@@ -22,9 +24,9 @@ struct pointTri
 	float x = 0, y = 0;
 };
 
-inline void copy_point(pointTri a, float3 b) {
+inline void copy_point(pointTri &a, float3 b) {
 	a.x = b[0];
-	a.y = b[1];
+	a.y = b[2];
 }
 //判断两点是否相等
 inline bool is_equal_vertex(float3 pointTri1, float3 pointTri2) {
@@ -32,7 +34,8 @@ inline bool is_equal_vertex(float3 pointTri1, float3 pointTri2) {
 	{
 		return true;
 	}
-	else {
+	else 
+	{
 		return false;
 	}
 }
@@ -59,7 +62,7 @@ inline float get_vector4_det(float3 v1, float3 v2, float3 v3, float3 v4)
 
 //利用叉积计算点p相对线段p1p2的方位  
 inline double direction(pointTri p1, pointTri p2, pointTri p) {
-	return (p.x - p1.x) * (p2.y - p1.y) - (p2.x - p1.x) * (p.y - p1.y);
+	return  (p2.x - p1.x) * (p.y - p1.y)-(p.x - p1.x) * (p2.y - p1.y);
 }
 
 
@@ -222,7 +225,8 @@ inline bool is_pointTri_within_triangle_vectex(Triangle *tri, float3 pointTri) {
 	{
 		return true;
 	}
-	else {
+	else 
+	{
 		return false;
 	}
 }
@@ -237,6 +241,7 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 
 	float p1_tri2_vertex3 = get_vector4_det(tri1->Vertex_1, tri1->Vertex_2, tri1->Vertex_3, tri2->Vertex_3);
 
+	qDebug() << p1_tri2_vertex1 << "   "<<p1_tri2_vertex2<<"   "<< p1_tri2_vertex3<<"\n";
 
 	if (p1_tri2_vertex1 > 0 && p1_tri2_vertex2 > 0 && p1_tri2_vertex3 > 0)
 	{
@@ -260,23 +265,6 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 			return NONINTERSECT;
 		}
 	}
-
-	//此处判断三角形共面的两点是否三角形上的一边
-	if (p1_tri2_vertex1 == 0 && (p1_tri2_vertex2 == 0 || p1_tri2_vertex3 == 0))
-	{
-		if (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_1) && (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_2) || is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_3)))
-		{
-			return NONINTERSECT;
-		}
-	}
-	else if (p1_tri2_vertex2 == 0 && p1_tri2_vertex3 == 0)
-	{
-		if (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_2) && is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_3))
-		{
-			return NONINTERSECT;
-		}
-	}
-
 
 	if (p1_tri2_vertex1 == 0 && p1_tri2_vertex2 * p1_tri2_vertex3 > 0)
 	{
@@ -331,26 +319,11 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 		return NONINTERSECT;
 	}
 
-	//此处判断三角形共面的两点是否三角形上的一边
-	if (p2_tri1_vertex1 == 0 && (p2_tri1_vertex2 == 0 || p2_tri1_vertex3 == 0))
-	{
-		if (is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_1) && (is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_2) || is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_3)))
-		{
-			return NONINTERSECT;
-		}
-	}
-	else if (p2_tri1_vertex2 == 0 && p2_tri1_vertex3 == 0)
-	{
-		if (is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_2) && is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_3))
-		{
-			return NONINTERSECT;
-		}
-	}
-
 	if (p2_tri1_vertex1 == 0 && p2_tri1_vertex2 * p2_tri1_vertex3 > 0)
 	{
 		if (is_pointTri_within_triangle(tri2, tri1->Vertex_1))
 		{
+			//qDebug() << "point在三角形内" << "\n";
 			return INTERSECT;
 		}
 		else
@@ -385,7 +358,7 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 
 
 
-	float* tri1_a = tri1->Vertex_1, *tri1_b = tri1->Vertex_2, *tri1_c = tri1->Vertex_3
+	float *tri1_a = tri1->Vertex_1, *tri1_b = tri1->Vertex_2, *tri1_c = tri1->Vertex_3
 		, *tri2_a = tri2->Vertex_1, *tri2_b = tri2->Vertex_2, *tri2_c = tri2->Vertex_3;
 
 	float* m;
