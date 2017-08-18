@@ -2,7 +2,6 @@
 #ifndef TRIANGLE_HAN
 #define TRIANGLE_HAN
 
-#include <QDebug>
 
 typedef float float3[3];
 
@@ -24,11 +23,24 @@ struct pointTri
 	float x = 0, y = 0;
 };
 
-inline void copy_point(pointTri &a, float3 b) {
+inline void copy_pointXY(pointTri &a, float3 b) {
+	a.x = b[0];
+	a.y = b[1];
+}
+
+inline void copy_pointXZ(pointTri &a, float3 b) {
 	a.x = b[0];
 	a.y = b[2];
 }
+
+inline void copy_pointYZ(pointTri &a, float3 b) {
+	a.x = b[1];
+	a.y = b[2];
+}
+
+
 //判断两点是否相等
+
 inline bool is_equal_vertex(float3 pointTri1, float3 pointTri2) {
 	if (pointTri1[0] == pointTri2[0] && pointTri1[1] == pointTri2[1] && pointTri1[2] == pointTri2[2])
 	{
@@ -59,12 +71,10 @@ inline float get_vector4_det(float3 v1, float3 v2, float3 v3, float3 v4)
 		- a[0][0] * a[1][2] * a[2][1];
 }
 
-
 //利用叉积计算点p相对线段p1p2的方位  
 inline double direction(pointTri p1, pointTri p2, pointTri p) {
 	return  (p2.x - p1.x) * (p.y - p1.y)-(p.x - p1.x) * (p2.y - p1.y);
 }
-
 
 //确定与线段p1p2共线的点p是否在线段p1p2上  
 inline int on_segment(pointTri p1, pointTri p2, pointTri p) {
@@ -117,35 +127,78 @@ inline int segments_intersert(pointTri p1, pointTri p2, pointTri p3, pointTri p4
 //判断同一平面的直线和三角形是否相交  
 inline bool line_triangle_intersert_inSamePlane(Triangle* tri, float3 f1, float3 f2)
 {
-	pointTri p1, p2, p3, p4;
+	//a:XY面 b:XZ面 c:YZ面
+	pointTri pa1, pa2, pb1, pb2, pc1, pc2, pa3, pa4, pb3, pb4, pc3, pc4;
 
-	copy_point(p1, f1);
+	copy_pointXY(pa1, f1);
 
-	copy_point(p2, f2);
+	copy_pointXY(pa2, f2);
 
-	copy_point(p3, tri->Vertex_1);
 
-	copy_point(p4, tri->Vertex_2);
+	copy_pointXZ(pb1, f1);
 
-	if (segments_intersert(p1, p2, p3, p4))
+	copy_pointXZ(pb2, f2);
+
+
+	copy_pointYZ(pc1, f1);
+
+	copy_pointYZ(pc2, f2);
+
+
+
+	copy_pointXY(pa3, tri->Vertex_1);
+
+	copy_pointXY(pa4, tri->Vertex_2);
+
+
+	copy_pointXZ(pb3, tri->Vertex_1);
+
+	copy_pointXZ(pb4, tri->Vertex_2);
+
+
+	copy_pointYZ(pc3, tri->Vertex_1);
+
+	copy_pointYZ(pc4, tri->Vertex_2);
+
+	if (segments_intersert(pa1, pa2, pa3, pa4)&& segments_intersert(pb1, pb2, pb3, pb4)&& segments_intersert(pc1, pc2, pc3, pc4))
 	{
 		return true;
 	}
 
-	copy_point(p3, tri->Vertex_2);
+	copy_pointXY(pa3, tri->Vertex_2);
 
-	copy_point(p4, tri->Vertex_3);
+	copy_pointXY(pa4, tri->Vertex_3);
 
-	if (segments_intersert(p1, p2, p3, p4))
+
+	copy_pointXZ(pb3, tri->Vertex_2);
+
+	copy_pointXZ(pb4, tri->Vertex_3);
+
+
+	copy_pointYZ(pc3, tri->Vertex_2);
+
+	copy_pointYZ(pc4, tri->Vertex_3);
+
+	if (segments_intersert(pa1, pa2, pa3, pa4) && segments_intersert(pb1, pb2, pb3, pb4) && segments_intersert(pc1, pc2, pc3, pc4))
 	{
 		return true;
 	}
 
-	copy_point(p3, tri->Vertex_1);
+	copy_pointXY(pa3, tri->Vertex_1);
 
-	copy_point(p4, tri->Vertex_3);
+	copy_pointXY(pa4, tri->Vertex_3);
 
-	if (segments_intersert(p1, p2, p3, p4))
+
+	copy_pointXZ(pb3, tri->Vertex_1);
+
+	copy_pointXZ(pb4, tri->Vertex_3);
+
+
+	copy_pointYZ(pc3, tri->Vertex_1);
+
+	copy_pointYZ(pc4, tri->Vertex_3);
+
+	if (segments_intersert(pa1, pa2, pa3, pa4) && segments_intersert(pb1, pb2, pb3, pb4) && segments_intersert(pc1, pc2, pc3, pc4))
 	{
 		return true;
 	}
@@ -154,25 +207,13 @@ inline bool line_triangle_intersert_inSamePlane(Triangle* tri, float3 f1, float3
 }
 
 
-//判断同一平面内的三角形是否相交  
-inline bool triangle_intersert_inSamePlane(Triangle* tri1, Triangle* tri2)
+inline void get_central_point(float3 centralPoint, Triangle* tri)
 {
-	if (line_triangle_intersert_inSamePlane(tri2, tri1->Vertex_1, tri1->Vertex_2))
-	{
-		return true;
-	}
-	else if (line_triangle_intersert_inSamePlane(tri2, tri1->Vertex_2, tri1->Vertex_3))
-	{
-		return true;
-	}
-	else if (line_triangle_intersert_inSamePlane(tri2, tri1->Vertex_1, tri1->Vertex_3))
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	centralPoint[0] = (tri->Vertex_1[0] + tri->Vertex_2[0] + tri->Vertex_3[0]) / 3;
+
+	centralPoint[1] = (tri->Vertex_1[1] + tri->Vertex_2[1] + tri->Vertex_3[1]) / 3;
+
+	centralPoint[2] = (tri->Vertex_1[2] + tri->Vertex_2[2] + tri->Vertex_3[2]) / 3;
 }
 
 //向量之差  
@@ -225,8 +266,41 @@ inline bool is_pointTri_within_triangle_vectex(Triangle *tri, float3 pointTri) {
 	{
 		return true;
 	}
-	else 
+	else
 	{
+		return false;
+	}
+}
+
+//判断同一平面内的三角形是否相交  
+inline bool triangle_intersert_inSamePlane(Triangle* tri1, Triangle* tri2)
+{
+	if (line_triangle_intersert_inSamePlane(tri2, tri1->Vertex_1, tri1->Vertex_2))
+	{
+		return true;
+	}
+	else if (line_triangle_intersert_inSamePlane(tri2, tri1->Vertex_2, tri1->Vertex_3))
+	{
+		return true;
+	}
+	else if (line_triangle_intersert_inSamePlane(tri2, tri1->Vertex_1, tri1->Vertex_3))
+	{
+		return true;
+	}
+	else
+	{
+		//先不看重叠面
+		//float3 centralPoint1, centralPoint2;
+
+		//get_central_point(centralPoint1, tri1);
+
+		//get_central_point(centralPoint2, tri2);
+
+		//if (is_pointTri_within_triangle(tri2, centralPoint1) || is_pointTri_within_triangle(tri1, centralPoint2))
+		//{
+		//	return true;
+		//}
+
 		return false;
 	}
 }
@@ -241,7 +315,7 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 
 	float p1_tri2_vertex3 = get_vector4_det(tri1->Vertex_1, tri1->Vertex_2, tri1->Vertex_3, tri2->Vertex_3);
 
-	qDebug() << p1_tri2_vertex1 << "   "<<p1_tri2_vertex2<<"   "<< p1_tri2_vertex3<<"\n";
+	//qDebug() << p1_tri2_vertex1 << "   "<<p1_tri2_vertex2<<"   "<< p1_tri2_vertex3<<"\n";
 
 	if (p1_tri2_vertex1 > 0 && p1_tri2_vertex2 > 0 && p1_tri2_vertex3 > 0)
 	{
