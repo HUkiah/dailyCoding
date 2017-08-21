@@ -40,13 +40,23 @@ inline void copy_pointYZ(pointTri &a, float3 b) {
 
 
 //判断两点是否相等
-
 inline bool is_equal_vertex(float3 pointTri1, float3 pointTri2) {
 	if (pointTri1[0] == pointTri2[0] && pointTri1[1] == pointTri2[1] && pointTri1[2] == pointTri2[2])
 	{
 		return true;
 	}
 	else 
+	{
+		return false;
+	}
+}
+
+inline bool is_equal_vertex(pointTri pointTri1, pointTri pointTri2) {
+	if (pointTri1.x == pointTri2.x && pointTri1.y == pointTri2.y)
+	{
+		return true;
+	}
+	else
 	{
 		return false;
 	}
@@ -82,7 +92,7 @@ inline int on_segment(pointTri p1, pointTri p2, pointTri p) {
 	double min = p1.x < p2.x ? p1.x : p2.x;
 	double max1 = p1.y > p2.y ? p1.y : p2.y;
 	double min1 = p1.y < p2.y ? p1.y : p2.y;
-	if (p.x >= min && p.x <= max && p.y >= min1 && p.y <= max1)
+	if (p.x >min && p.x < max && p.y > min1 && p.y < max1)//修改 去除“=”,除去共线点，与顶点相同
 	{
 		return 1;
 	}
@@ -92,6 +102,30 @@ inline int on_segment(pointTri p1, pointTri p2, pointTri p) {
 	}
 }
 
+inline void get_central_point(float3 centralPoint, Triangle* tri)
+{
+	centralPoint[0] = (tri->Vertex_1[0] + tri->Vertex_2[0] + tri->Vertex_3[0]) / 3;
+
+	centralPoint[1] = (tri->Vertex_1[1] + tri->Vertex_2[1] + tri->Vertex_3[1]) / 3;
+
+	centralPoint[2] = (tri->Vertex_1[2] + tri->Vertex_2[2] + tri->Vertex_3[2]) / 3;
+}
+
+//向量之差  
+inline void get_vector_diff(float3& aimV, const float3 a, const float3 b)
+{
+	aimV[0] = b[0] - a[0];
+
+	aimV[1] = b[1] - a[1];
+
+	aimV[2] = b[2] - a[2];
+}
+
+//向量内积  
+inline float Dot(const float3& v1, const float3& v2)
+{
+	return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
+}
 
 //判断线段p1p2与线段p3p4是否相交的主函数  
 inline int segments_intersert(pointTri p1, pointTri p2, pointTri p3, pointTri p4) {
@@ -123,10 +157,74 @@ inline int segments_intersert(pointTri p1, pointTri p2, pointTri p3, pointTri p4
 	return 0;
 }
 
+//重心法判断点是否在三角形内部  
+inline bool is_pointTri_within_triangle(Triangle* tri, float3 pointTri)
+{
+	float3 v0;
+	get_vector_diff(v0, tri->Vertex_1, tri->Vertex_3);
+	float3 v1;
+	get_vector_diff(v1, tri->Vertex_1, tri->Vertex_2);
+	float3 v2;
+	get_vector_diff(v2, tri->Vertex_1, pointTri);
+	float dot00 = Dot(v0, v0);
+	float dot01 = Dot(v0, v1);
+	float dot02 = Dot(v0, v2);
+	float dot11 = Dot(v1, v1);
+	float dot12 = Dot(v1, v2);
+	float inverDeno = 1 / (dot00* dot11 - dot01* dot01);
+	float u = (dot11* dot02 - dot01* dot12) * inverDeno;
+	if (u <= 0 || u >= 1) // if u out of range, return directly  经过修改，去除点在边长的情况（包括顶点）
+	{
+		return false;
+	}
+	float v = (dot00* dot12 - dot01* dot02) * inverDeno;
+	if (v <= 0 || v >= 1) // if v out of range, return directly  
+	{
+		return false;
+	}
+	return u + v <= 1;
+}
+
+//判断点是否是三角形的一个顶点
+inline bool is_pointTri_within_triangle_vectex(Triangle *tri, float3 pointTri) {
+	if (is_equal_vertex(tri->Vertex_1, pointTri) || is_equal_vertex(tri->Vertex_2, pointTri) || is_equal_vertex(tri->Vertex_3, pointTri))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
 
 //判断同一平面的直线和三角形是否相交  
 inline bool line_triangle_intersert_inSamePlane(Triangle* tri, float3 f1, float3 f2)
 {
+	,
+	//判断两点是否是三角形的两顶点
+		if (is_pointTri_within_triangle_vectex(tri, f1))
+		{
+			if (is_pointTri_within_triangle_vectex(tri, f2))
+			{
+				return false;//两点排除
+			}else if (is_pointTri_within_triangle(tri,f2))
+			{
+				return false;//排除包含关系
+			}
+		}else if (is_pointTri_within_triangle_vectex(tri, f2))
+		{
+			if (is_pointTri_within_triangle(tri, f1))
+			{
+				return false;//排除包含关系
+			}
+
+		}else if (is_pointTri_within_triangle(tri,f1)|| is_pointTri_within_triangle(tri, f2))
+		{
+			return false;
+		}
+
+
+
 	//a:XY面 b:XZ面 c:YZ面
 	pointTri pa1, pa2, pb1, pb2, pc1, pc2, pa3, pa4, pb3, pb4, pc3, pc4;
 
@@ -206,71 +304,6 @@ inline bool line_triangle_intersert_inSamePlane(Triangle* tri, float3 f1, float3
 	return false;
 }
 
-
-inline void get_central_point(float3 centralPoint, Triangle* tri)
-{
-	centralPoint[0] = (tri->Vertex_1[0] + tri->Vertex_2[0] + tri->Vertex_3[0]) / 3;
-
-	centralPoint[1] = (tri->Vertex_1[1] + tri->Vertex_2[1] + tri->Vertex_3[1]) / 3;
-
-	centralPoint[2] = (tri->Vertex_1[2] + tri->Vertex_2[2] + tri->Vertex_3[2]) / 3;
-}
-
-//向量之差  
-inline void get_vector_diff(float3& aimV, const float3 a, const float3 b)
-{
-	aimV[0] = b[0] - a[0];
-
-	aimV[1] = b[1] - a[1];
-
-	aimV[2] = b[2] - a[2];
-}
-
-//向量内积  
-inline float Dot(const float3& v1, const float3& v2)
-{
-	return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
-}
-
-//重心法判断点是否在三角形内部  
-inline bool is_pointTri_within_triangle(Triangle* tri, float3 pointTri)
-{
-	float3 v0;
-	get_vector_diff(v0, tri->Vertex_1, tri->Vertex_3);
-	float3 v1;
-	get_vector_diff(v1, tri->Vertex_1, tri->Vertex_2);
-	float3 v2;
-	get_vector_diff(v2, tri->Vertex_1, pointTri);
-	float dot00 = Dot(v0, v0);
-	float dot01 = Dot(v0, v1);
-	float dot02 = Dot(v0, v2);
-	float dot11 = Dot(v1, v1);
-	float dot12 = Dot(v1, v2);
-	float inverDeno = 1 / (dot00* dot11 - dot01* dot01);
-	float u = (dot11* dot02 - dot01* dot12) * inverDeno;
-	if (u < 0 || u > 1) // if u out of range, return directly  
-	{
-		return false;
-	}
-	float v = (dot00* dot12 - dot01* dot02) * inverDeno;
-	if (v < 0 || v > 1) // if v out of range, return directly  
-	{
-		return false;
-	}
-	return u + v <= 1;
-}
-
-//判断点是否是三角形的一个顶点
-inline bool is_pointTri_within_triangle_vectex(Triangle *tri, float3 pointTri) {
-	if (is_equal_vertex(tri->Vertex_1, pointTri) || is_equal_vertex(tri->Vertex_2, pointTri) || is_equal_vertex(tri->Vertex_3, pointTri))
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
 
 //判断同一平面内的三角形是否相交  
 inline bool triangle_intersert_inSamePlane(Triangle* tri1, Triangle* tri2)

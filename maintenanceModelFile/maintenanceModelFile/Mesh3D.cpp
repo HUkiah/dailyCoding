@@ -632,52 +632,52 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 							//}
 
 							//如果要比对的面是目标面，周围的面则跳过,包括它本身
-								if (is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_1))
-							{
-								if (is_pointTri_within_triangle(&Tria[i],Tria[j].Vertex_2)&& !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_2))
-								{
-									;
-								}
-								else if (is_pointTri_within_triangle(&Tria[i], Tria[j].Vertex_3) && !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_3))
-								{
-									;
-								}
-								else
-								{
-									continue;
-								}
-								
-							}
-							else if (is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_2))
-							{
-								if (is_pointTri_within_triangle(&Tria[i], Tria[j].Vertex_1) && !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_1))
-								{
-									;
-								}
-								else if (is_pointTri_within_triangle(&Tria[i], Tria[j].Vertex_3) && !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_3))
-								{
-									;
-								}
-								else
-								{
-									continue;
-								}
-							}
-							else if(is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_3))
-							{
-								if (is_pointTri_within_triangle(&Tria[i], Tria[j].Vertex_1) && !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_1))
-								{
-									;
-								}
-								else if (is_pointTri_within_triangle(&Tria[i], Tria[j].Vertex_2) && !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_2))
-								{
-									;
-								}
-								else
-								{
-									continue;
-								}
-							}
+							//	if (is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_1))
+							//{
+							//	if (is_pointTri_within_triangle(&Tria[i],Tria[j].Vertex_2)&& !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_2))
+							//	{
+							//		;
+							//	}
+							//	else if (is_pointTri_within_triangle(&Tria[i], Tria[j].Vertex_3) && !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_3))
+							//	{
+							//		;
+							//	}
+							//	else
+							//	{
+							//		continue;
+							//	}
+							//	
+							//}
+							//else if (is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_2))
+							//{
+							//	if (is_pointTri_within_triangle(&Tria[i], Tria[j].Vertex_1) && !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_1))
+							//	{
+							//		;
+							//	}
+							//	else if (is_pointTri_within_triangle(&Tria[i], Tria[j].Vertex_3) && !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_3))
+							//	{
+							//		;
+							//	}
+							//	else
+							//	{
+							//		continue;
+							//	}
+							//}
+							//else if(is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_3))
+							//{
+							//	if (is_pointTri_within_triangle(&Tria[i], Tria[j].Vertex_1) && !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_1))
+							//	{
+							//		;
+							//	}
+							//	else if (is_pointTri_within_triangle(&Tria[i], Tria[j].Vertex_2) && !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_2))
+							//	{
+							//		;
+							//	}
+							//	else
+							//	{
+							//		continue;
+							//	}
+							//}
 
 							n++;
 							if (judge_triangle_topologicalStructure(&Tria[i], &Tria[j]) == INTERSECT)

@@ -141,7 +141,7 @@ void RenderingWidget::Render()
 	//DrawAxes(is_draw_axes_);
 	DrawGrid(is_draw_grid_);
 	//DrawPoints(is_draw_point_);
-	//DrawEdge(is_draw_edge_);
+	DrawEdge(is_draw_edge_);
 	DrawFace(is_draw_face_);
 	//DrawTexture(is_draw_texture_);
 }
