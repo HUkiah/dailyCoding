@@ -1,13 +1,12 @@
-
 #ifndef TRIANGLE_HAN
 #define TRIANGLE_HAN
-
+#include <QDebug>
 
 typedef float float3[3];
 
 enum TopologicalStructure
 {
-	INTERSECT, NONINTERSECT
+	INTERSECT,NONINTERSECT
 };
 
 
@@ -41,7 +40,8 @@ inline void copy_pointYZ(pointTri &a, float3 b) {
 
 //判断两点是否相等
 inline bool is_equal_vertex(float3 pointTri1, float3 pointTri2) {
-	if (pointTri1[0] == pointTri2[0] && pointTri1[1] == pointTri2[1] && pointTri1[2] == pointTri2[2])
+	//if (pointTri1[0] == pointTri2[0] && pointTri1[1] == pointTri2[1] && pointTri1[2] == pointTri2[2])
+	if (pointTri1[0] - pointTri2[0]<=0.000005 && pointTri1[1] - pointTri2[1]<=0.000005 && pointTri1[2] - pointTri2[2]<=0.000005)
 	{
 		return true;
 	}
@@ -51,16 +51,16 @@ inline bool is_equal_vertex(float3 pointTri1, float3 pointTri2) {
 	}
 }
 
-inline bool is_equal_vertex(pointTri pointTri1, pointTri pointTri2) {
-	if (pointTri1.x == pointTri2.x && pointTri1.y == pointTri2.y)
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
+//inline bool is_equal_vertex(pointTri pointTri1, pointTri pointTri2) {
+//	if (pointTri1.x == pointTri2.x && pointTri1.y == pointTri2.y)
+//	{
+//		return true;
+//	}
+//	else
+//	{
+//		return false;
+//	}
+//}
 
 //四点行列式  
 inline float get_vector4_det(float3 v1, float3 v2, float3 v3, float3 v4)
@@ -92,8 +92,10 @@ inline int on_segment(pointTri p1, pointTri p2, pointTri p) {
 	double min = p1.x < p2.x ? p1.x : p2.x;
 	double max1 = p1.y > p2.y ? p1.y : p2.y;
 	double min1 = p1.y < p2.y ? p1.y : p2.y;
-	if (p.x >min && p.x < max && p.y > min1 && p.y < max1)//修改 去除“=”,除去共线点，与顶点相同
+
+	if (p.x >=min && p.x <= max && p.y >= min1 && p.y <= max1)//修改 去除“=”,除去共线点，与顶点相同
 	{
+		//在二维空间中去控制 边，点的关系，是糟糕的想法（就是上面注释的想法）
 		return 1;
 	}
 	else
@@ -137,7 +139,7 @@ inline int segments_intersert(pointTri p1, pointTri p2, pointTri p3, pointTri p4
 	if (d1 * d2 < 0 && d3 * d4 < 0)
 	{
 		return 1;
-	}
+	}//共线但是点与顶点重合，判定不相交(共面且顶点重合的两个面，判定为不相交)
 	else if (d1 == 0 && on_segment(p3, p4, p1) == 1)
 	{
 		return 1;
@@ -173,12 +175,12 @@ inline bool is_pointTri_within_triangle(Triangle* tri, float3 pointTri)
 	float dot12 = Dot(v1, v2);
 	float inverDeno = 1 / (dot00* dot11 - dot01* dot01);
 	float u = (dot11* dot02 - dot01* dot12) * inverDeno;
-	if (u <= 0 || u >= 1) // if u out of range, return directly  经过修改，去除点在边长的情况（包括顶点）
+	if (u < 0 || u > 1) // if u out of range, return directly  经过修改，去除点在边长的情况（包括顶点）
 	{
 		return false;
 	}
 	float v = (dot00* dot12 - dot01* dot02) * inverDeno;
-	if (v <= 0 || v >= 1) // if v out of range, return directly  
+	if (v < 0 || v > 1) // if v out of range, return directly  
 	{
 		return false;
 	}
@@ -200,31 +202,6 @@ inline bool is_pointTri_within_triangle_vectex(Triangle *tri, float3 pointTri) {
 //判断同一平面的直线和三角形是否相交  
 inline bool line_triangle_intersert_inSamePlane(Triangle* tri, float3 f1, float3 f2)
 {
-	,
-	//判断两点是否是三角形的两顶点
-		if (is_pointTri_within_triangle_vectex(tri, f1))
-		{
-			if (is_pointTri_within_triangle_vectex(tri, f2))
-			{
-				return false;//两点排除
-			}else if (is_pointTri_within_triangle(tri,f2))
-			{
-				return false;//排除包含关系
-			}
-		}else if (is_pointTri_within_triangle_vectex(tri, f2))
-		{
-			if (is_pointTri_within_triangle(tri, f1))
-			{
-				return false;//排除包含关系
-			}
-
-		}else if (is_pointTri_within_triangle(tri,f1)|| is_pointTri_within_triangle(tri, f2))
-		{
-			return false;
-		}
-
-
-
 	//a:XY面 b:XZ面 c:YZ面
 	pointTri pa1, pa2, pb1, pb2, pc1, pc2, pa3, pa4, pb3, pb4, pc3, pc4;
 
@@ -304,10 +281,33 @@ inline bool line_triangle_intersert_inSamePlane(Triangle* tri, float3 f1, float3
 	return false;
 }
 
-
 //判断同一平面内的三角形是否相交  
 inline bool triangle_intersert_inSamePlane(Triangle* tri1, Triangle* tri2)
 {
+	//排除共顶点的三角面
+	if (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_1) || is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_2) || is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_3))
+	{
+		return false;
+	}//排除两点共线的情况(包含)
+	else if ((is_pointTri_within_triangle(tri1, tri2->Vertex_1) && is_pointTri_within_triangle(tri1, tri2->Vertex_2))||(is_pointTri_within_triangle(tri1, tri2->Vertex_1) && is_pointTri_within_triangle(tri1, tri2->Vertex_3))||(is_pointTri_within_triangle(tri1, tri2->Vertex_3) && is_pointTri_within_triangle(tri1, tri2->Vertex_2)))
+	{
+		return false;
+	}
+
+	//排除正确的边关系,两点在三角面上
+	//if (is_pointTri_within_triangle(tri1,tri2->Vertex_1)&&is_pointTri_within_triangle(tri1,tri2->Vertex_2)&&!is_pointTri_within_triangle(tri1,tri2->Vertex_3))
+	//{
+	//
+	//}
+	//else if (is_pointTri_within_triangle(tri1, tri2->Vertex_1) && is_pointTri_within_triangle(tri1, tri2->Vertex_3) && !is_pointTri_within_triangle(tri1, tri2->Vertex_2)) 
+	//{
+	//
+	//}
+	//else if (is_pointTri_within_triangle(tri1, tri2->Vertex_2) && is_pointTri_within_triangle(tri1, tri2->Vertex_3) && !is_pointTri_within_triangle(tri1, tri2->Vertex_1))
+	//{
+	//
+	//}
+	
 	if (line_triangle_intersert_inSamePlane(tri2, tri1->Vertex_1, tri1->Vertex_2))
 	{
 		return true;
@@ -341,14 +341,20 @@ inline bool triangle_intersert_inSamePlane(Triangle* tri1, Triangle* tri2)
 //Devillers算法主函数  
 inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, Triangle* tri2)
 {
-	//设tri1所在的平面为p1,tri2所在的平面为p2  
+	//排除自身比较
+	if (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_1) && is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_2) && is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_3))
+	{
+		return NONINTERSECT;
+	}
+
+	////设tri1所在的平面为p1,tri2所在的平面为p2  
 	float p1_tri2_vertex1 = get_vector4_det(tri1->Vertex_1, tri1->Vertex_2, tri1->Vertex_3, tri2->Vertex_1);
 
 	float p1_tri2_vertex2 = get_vector4_det(tri1->Vertex_1, tri1->Vertex_2, tri1->Vertex_3, tri2->Vertex_2);
 
 	float p1_tri2_vertex3 = get_vector4_det(tri1->Vertex_1, tri1->Vertex_2, tri1->Vertex_3, tri2->Vertex_3);
 
-	//qDebug() << p1_tri2_vertex1 << "   "<<p1_tri2_vertex2<<"   "<< p1_tri2_vertex3<<"\n";
+	////qDebug() << p1_tri2_vertex1 << "   "<<p1_tri2_vertex2<<"   "<< p1_tri2_vertex3<<"\n";
 
 	if (p1_tri2_vertex1 > 0 && p1_tri2_vertex2 > 0 && p1_tri2_vertex3 > 0)
 	{
@@ -377,7 +383,16 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 	{
 		if (is_pointTri_within_triangle(tri1, tri2->Vertex_1))
 		{
-			return INTERSECT;
+			if (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_1))
+			{
+				return NONINTERSECT;//排除一点在面上但是与其中一顶点重合
+			}
+			else
+			{
+				qDebug() << "asdhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa111111111111111111";
+				return INTERSECT;
+			}
+			
 		}
 		else
 		{
@@ -388,7 +403,15 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 	{
 		if (is_pointTri_within_triangle(tri1, tri2->Vertex_2))
 		{
-			return INTERSECT;
+			if (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_2))
+			{
+				return NONINTERSECT;//一点在面上但是与其中一顶点重合
+			}
+			else
+			{
+				qDebug() << "asdhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa2222222222222222222";
+				return INTERSECT;
+			}
 		}
 		else
 		{
@@ -399,16 +422,71 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 	{
 		if (is_pointTri_within_triangle(tri1, tri2->Vertex_3))
 		{
-			return INTERSECT;
+			if (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_3))
+			{
+				return NONINTERSECT;//一点在面上但是与其中一顶点重合
+			}
+			else
+			{
+				qDebug() << "asdhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa33333333333333333";
+				return INTERSECT;
+			}
 		}
 		else
 		{
 			return NONINTERSECT;
 		}
 	}
-
-
-
+//
+//	//处理一条边在另三角面中的情况
+//	if (p1_tri2_vertex1 == 0 && p1_tri2_vertex2==0 && p1_tri2_vertex3 !=0)
+//	{
+//		//两点都在三角面内部，边上的关系为包含关系，应该判断，两点与三角形的其中一条边共线，姑且这样
+//		if (is_pointTri_within_triangle_vectex(tri1,tri2->Vertex_1)&& is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_2))
+//		{
+//			return NONINTERSECT;
+//		}
+//		//else if ((is_pointTri_within_triangle(tri1, tri2->Vertex_1) && is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_1)) || (is_pointTri_within_triangle(tri1, tri2->Vertex_2) && is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_2)))
+//		//{
+//		//	return NONINTERSECT;
+//		//}
+//		else
+//		{
+//			return INTERSECT;
+//		}
+//	}
+//	else if (p1_tri2_vertex1 == 0 && p1_tri2_vertex3 == 0 && p1_tri2_vertex2 != 0)
+//	{
+//		if (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_1) && is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_3))
+//		{
+//			return NONINTERSECT;
+//		}
+//		//else if ((is_pointTri_within_triangle(tri1, tri2->Vertex_1) && is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_1)) || (is_pointTri_within_triangle(tri1, tri2->Vertex_3) && is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_3)))
+//		//{
+//		//	return NONINTERSECT;
+//		//}
+//		else
+//		{
+//			return INTERSECT;
+//		}
+//	}
+//	else if (p1_tri2_vertex2 == 0 && p1_tri2_vertex3 == 0 && p1_tri2_vertex1 != 0)
+//	{
+//		if (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_2) && is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_3))
+//		{
+//			return NONINTERSECT;
+//		}
+//		//else if ((is_pointTri_within_triangle(tri1, tri2->Vertex_2) && is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_2)) || (is_pointTri_within_triangle(tri1, tri2->Vertex_3) && is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_3)))
+//		//{
+//		//	return NONINTERSECT;
+//		//}
+//		else
+//		{
+//			return INTERSECT;
+//		}
+//	}
+//
+//
 	float p2_tri1_vertex1 = get_vector4_det(tri2->Vertex_1, tri2->Vertex_2, tri2->Vertex_3, tri1->Vertex_1);
 
 	float p2_tri1_vertex2 = get_vector4_det(tri2->Vertex_1, tri2->Vertex_2, tri2->Vertex_3, tri1->Vertex_2);
@@ -430,8 +508,15 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 	{
 		if (is_pointTri_within_triangle(tri2, tri1->Vertex_1))
 		{
-			//qDebug() << "point在三角形内" << "\n";
-			return INTERSECT;
+			if (is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_1))
+			{
+				return NONINTERSECT;//一点在面上但是与其中一顶点重合
+			}
+			else
+			{
+				qDebug() << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11";
+				return INTERSECT;
+			}
 		}
 		else
 		{
@@ -443,7 +528,15 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 	{
 		if (is_pointTri_within_triangle(tri2, tri1->Vertex_2))
 		{
-			return INTERSECT;
+			if (is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_2))
+			{
+				return NONINTERSECT;//一点在面上但是与其中一顶点重合
+			}
+			else
+			{
+				qDebug() << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa22";
+				return INTERSECT;
+			}
 		}
 		else
 		{
@@ -455,119 +548,177 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 	{
 		if (is_pointTri_within_triangle(tri2, tri1->Vertex_3))
 		{
-			return INTERSECT;
+			if (is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_3))
+			{
+				return NONINTERSECT;//一点在面上但是与其中一顶点重合
+			}
+			else
+			{
+				qDebug() << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa33";
+				return INTERSECT;
+			}
 		}
 		else
 		{
 			return NONINTERSECT;
 		}
 	}
-
-
-
-	float *tri1_a = tri1->Vertex_1, *tri1_b = tri1->Vertex_2, *tri1_c = tri1->Vertex_3
-		, *tri2_a = tri2->Vertex_1, *tri2_b = tri2->Vertex_2, *tri2_c = tri2->Vertex_3;
-
-	float* m;
-
-	float im;
-
-	if (p2_tri1_vertex2 * p2_tri1_vertex3 >= 0 && p2_tri1_vertex1 != 0)
-	{
-		if (p2_tri1_vertex1 < 0)
-		{
-			m = tri2_b;
-			tri2_b = tri2_c;
-			tri2_c = m;
-
-			im = p1_tri2_vertex2;
-			p1_tri2_vertex2 = p1_tri2_vertex3;
-			p1_tri2_vertex3 = im;
-		}
-	}
-	else if (p2_tri1_vertex1 * p2_tri1_vertex3 >= 0 && p2_tri1_vertex2 != 0)
-	{
-		m = tri1_a;
-		tri1_a = tri1_b;
-		tri1_b = tri1_c;
-		tri1_c = m;
-
-		if (p2_tri1_vertex2 < 0)
-		{
-			m = tri2_b;
-			tri2_b = tri2_c;
-			tri2_c = m;
-
-			im = p1_tri2_vertex2;
-			p1_tri2_vertex2 = p1_tri2_vertex3;
-			p1_tri2_vertex3 = im;
-		}
-	}
-	else if (p2_tri1_vertex1 * p2_tri1_vertex2 >= 0 && p2_tri1_vertex3 != 0)
-	{
-		m = tri1_a;
-		tri1_a = tri1_c;
-		tri1_c = tri1_b;
-		tri1_b = m;
-
-		if (p2_tri1_vertex3 < 0)
-		{
-			m = tri2_b;
-			tri2_b = tri2_c;
-			tri2_c = m;
-
-			im = p1_tri2_vertex2;
-			p1_tri2_vertex2 = p1_tri2_vertex3;
-			p1_tri2_vertex3 = im;
-		}
-	}
-
-	if (p1_tri2_vertex2 * p1_tri2_vertex3 >= 0 && p1_tri2_vertex1 != 0)
-	{
-		if (p1_tri2_vertex1 < 0)
-		{
-			m = tri1_b;
-			tri1_b = tri1_c;
-			tri1_c = m;
-		}
-	}
-	else if (p1_tri2_vertex1 * p1_tri2_vertex3 >= 0 && p1_tri2_vertex2 != 0)
-	{
-		m = tri2_a;
-		tri2_a = tri2_b;
-		tri2_b = tri2_c;
-		tri2_c = m;
-
-		if (p1_tri2_vertex2 < 0)
-		{
-			m = tri1_b;
-			tri1_b = tri1_c;
-			tri1_c = m;
-		}
-	}
-	else if (p1_tri2_vertex1 * p1_tri2_vertex2 >= 0 && p1_tri2_vertex3 != 0)
-	{
-		m = tri2_a;
-		tri2_a = tri2_c;
-		tri2_c = tri2_b;
-		tri2_b = m;
-
-		if (p1_tri2_vertex3 < 0)
-		{
-			m = tri1_b;
-			tri1_b = tri1_c;
-			tri1_c = m;
-		}
-	}
-
-	if (get_vector4_det(tri1_a, tri1_b, tri2_a, tri2_b) < 0 && get_vector4_det(tri1_a, tri1_c, tri2_c, tri2_a) < 0)
-	{
-		return INTERSECT;
-	}
-	else
-	{
-		return NONINTERSECT;
-	}
+//
+//	//处理一条边在另三角面中的情况
+//	if (p2_tri1_vertex1 == 0 && p2_tri1_vertex2 == 0 && p2_tri1_vertex3 != 0)
+//	{
+//		//两点都在三角面内部，边上的关系为包含关系，应该判断，两点与三角形的其中一条边共线，姑且这样
+//		if (is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_1) && is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_2))
+//		{
+//			return NONINTERSECT;
+//		}
+//		//else if ((is_pointTri_within_triangle(tri2, tri1->Vertex_1) && is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_1)) || (is_pointTri_within_triangle(tri2, tri1->Vertex_2) && is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_2)))
+//		//{
+//		//	return NONINTERSECT;
+//		//}
+//		else
+//		{
+//			return INTERSECT;
+//		}
+//	}
+//	else if (p2_tri1_vertex1 == 0 && p2_tri1_vertex3 == 0 && p2_tri1_vertex2 != 0)
+//	{
+//		//两点都在三角面内部，边上的关系为包含关系，应该判断，两点与三角形的其中一条边共线，姑且这样
+//		if (is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_1) && is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_3))
+//		{
+//			return NONINTERSECT;
+//		}
+//		//else if ((is_pointTri_within_triangle(tri2, tri1->Vertex_1) && is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_1)) || (is_pointTri_within_triangle(tri2, tri1->Vertex_3) && is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_3)))
+//		//{
+//		//	return NONINTERSECT;
+//		//}
+//		else
+//		{
+//			return INTERSECT;
+//		}
+//	}
+//	else	if (p2_tri1_vertex2 == 0 && p2_tri1_vertex3 == 0 && p2_tri1_vertex1 != 0)
+//	{
+//		//两点都在三角面内部，边上的关系为包含关系，应该判断，两点与三角形的其中一条边共线，姑且这样
+//		if (is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_2) && is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_3))
+//		{
+//			return NONINTERSECT;
+//		}
+//		//else if ((is_pointTri_within_triangle(tri2, tri1->Vertex_2) && is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_2)) || (is_pointTri_within_triangle(tri2, tri1->Vertex_3) && is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_3)))
+//		//{
+//		//	return NONINTERSECT;
+//		//}
+//		else
+//		{
+//			return INTERSECT;
+//		}
+//	}
+//
+//
+//	float *tri1_a = tri1->Vertex_1, *tri1_b = tri1->Vertex_2, *tri1_c = tri1->Vertex_3
+//		, *tri2_a = tri2->Vertex_1, *tri2_b = tri2->Vertex_2, *tri2_c = tri2->Vertex_3;
+//
+//	float* m;
+//
+//	float im;
+//
+//	if (p2_tri1_vertex2 * p2_tri1_vertex3 >= 0 && p2_tri1_vertex1 != 0)
+//	{
+//		if (p2_tri1_vertex1 < 0)
+//		{
+//			m = tri2_b;
+//			tri2_b = tri2_c;
+//			tri2_c = m;
+//
+//			im = p1_tri2_vertex2;
+//			p1_tri2_vertex2 = p1_tri2_vertex3;
+//			p1_tri2_vertex3 = im;
+//		}
+//	}
+//	else if (p2_tri1_vertex1 * p2_tri1_vertex3 >= 0 && p2_tri1_vertex2 != 0)
+//	{
+//		m = tri1_a;
+//		tri1_a = tri1_b;
+//		tri1_b = tri1_c;
+//		tri1_c = m;
+//
+//		if (p2_tri1_vertex2 < 0)
+//		{
+//			m = tri2_b;
+//			tri2_b = tri2_c;
+//			tri2_c = m;
+//
+//			im = p1_tri2_vertex2;
+//			p1_tri2_vertex2 = p1_tri2_vertex3;
+//			p1_tri2_vertex3 = im;
+//		}
+//	}
+//	else if (p2_tri1_vertex1 * p2_tri1_vertex2 >= 0 && p2_tri1_vertex3 != 0)
+//	{
+//		m = tri1_a;
+//		tri1_a = tri1_c;
+//		tri1_c = tri1_b;
+//		tri1_b = m;
+//
+//		if (p2_tri1_vertex3 < 0)
+//		{
+//			m = tri2_b;
+//			tri2_b = tri2_c;
+//			tri2_c = m;
+//
+//			im = p1_tri2_vertex2;
+//			p1_tri2_vertex2 = p1_tri2_vertex3;
+//			p1_tri2_vertex3 = im;
+//		}
+//	}
+//
+//	if (p1_tri2_vertex2 * p1_tri2_vertex3 >= 0 && p1_tri2_vertex1 != 0)
+//	{
+//		if (p1_tri2_vertex1 < 0)
+//		{
+//			m = tri1_b;
+//			tri1_b = tri1_c;
+//			tri1_c = m;
+//		}
+//	}
+//	else if (p1_tri2_vertex1 * p1_tri2_vertex3 >= 0 && p1_tri2_vertex2 != 0)
+//	{
+//		m = tri2_a;
+//		tri2_a = tri2_b;
+//		tri2_b = tri2_c;
+//		tri2_c = m;
+//
+//		if (p1_tri2_vertex2 < 0)
+//		{
+//			m = tri1_b;
+//			tri1_b = tri1_c;
+//			tri1_c = m;
+//		}
+//	}
+//	else if (p1_tri2_vertex1 * p1_tri2_vertex2 >= 0 && p1_tri2_vertex3 != 0)
+//	{
+//		m = tri2_a;
+//		tri2_a = tri2_c;
+//		tri2_c = tri2_b;
+//		tri2_b = m;
+//
+//		if (p1_tri2_vertex3 < 0)
+//		{
+//			m = tri1_b;
+//			tri1_b = tri1_c;
+//			tri1_c = m;
+//		}
+//	}
+//
+//	if (get_vector4_det(tri1_a, tri1_b, tri2_a, tri2_b) < 0 && get_vector4_det(tri1_a, tri1_c, tri2_c, tri2_a) < 0)
+//	{
+//		return INTERSECT;
+//	}
+//	else
+//	{
+//		return NONINTERSECT;
+//	}
+	return NONINTERSECT;//默认返回值
 }
 
 //判断两个三角形是否是同一个三角形
