@@ -9,11 +9,12 @@ enum TopologicalStructure
 	INTERSECT,NONINTERSECT
 };
 
-
 class Triangle
 {
 public:
 	float3 Vertex_1, Vertex_2, Vertex_3;
+	float3 centerpoint;
+	float radius;
 	int selected = 0;
 };
 
@@ -40,8 +41,8 @@ inline void copy_pointYZ(pointTri &a, float3 b) {
 
 //判断两点是否相等
 inline bool is_equal_vertex(float3 pointTri1, float3 pointTri2) {
-	//if (pointTri1[0] == pointTri2[0] && pointTri1[1] == pointTri2[1] && pointTri1[2] == pointTri2[2])
-	if (pointTri1[0] - pointTri2[0]<=0.000005 && pointTri1[1] - pointTri2[1]<=0.000005 && pointTri1[2] - pointTri2[2]<=0.000005)
+	if (pointTri1[0] == pointTri2[0] && pointTri1[1] == pointTri2[1] && pointTri1[2] == pointTri2[2])
+	//if (pointTri1[0] - pointTri2[0]<=0.00001 && pointTri1[1] - pointTri2[1]<=0.00001 && pointTri1[2] - pointTri2[2]<=0.00001)
 	{
 		return true;
 	}
@@ -102,6 +103,43 @@ inline int on_segment(pointTri p1, pointTri p2, pointTri p) {
 	{
 		return 0;
 	}
+}
+
+inline void get_center_point_of_circle(Triangle* tri)
+{
+	float3 centerpoint;
+	
+	double a1, b1, c1, d1;
+	double a2, b2, c2, d2;
+	double a3, b3, c3, d3;
+
+	double x1 = tri->Vertex_1[0], y1 = tri->Vertex_1[1], z1 = tri->Vertex_1[2];
+	double x2 = tri->Vertex_2[0], y2 = tri->Vertex_2[1], z2 = tri->Vertex_2[2];
+	double x3 = tri->Vertex_3[0], y3 = tri->Vertex_3[1], z3 = tri->Vertex_3[2];
+
+	a1 = (y1*z2 - y2*z1 - y1*z3 + y3*z1 + y2*z3 - y3*z2);
+	b1 = -(x1*z2 - x2*z1 - x1*z3 + x3*z1 + x2*z3 - x3*z2);
+	c1 = (x1*y2 - x2*y1 - x1*y3 + x3*y1 + x2*y3 - x3*y2);
+	d1 = -(x1*y2*z3 - x1*y3*z2 - x2*y1*z3 + x2*y3*z1 + x3*y1*z2 - x3*y2*z1);
+
+	a2 = 2 * (x2 - x1);
+	b2 = 2 * (y2 - y1);
+	c2 = 2 * (z2 - z1);
+	d2 = x1 * x1 + y1 * y1 + z1 * z1 - x2 * x2 - y2 * y2 - z2 * z2;
+
+	a3 = 2 * (x3 - x1);
+	b3 = 2 * (y3 - y1);
+	c3 = 2 * (z3 - z1);
+	d3 = x1 * x1 + y1 * y1 + z1 * z1 - x3 * x3 - y3 * y3 - z3 * z3;
+
+	centerpoint[0] = -(b1*c2*d3 - b1*c3*d2 - b2*c1*d3 + b2*c3*d1 + b3*c1*d2 - b3*c2*d1)
+		/ (a1*b2*c3 - a1*b3*c2 - a2*b1*c3 + a2*b3*c1 + a3*b1*c2 - a3*b2*c1);
+	centerpoint[1] = (a1*c2*d3 - a1*c3*d2 - a2*c1*d3 + a2*c3*d1 + a3*c1*d2 - a3*c2*d1)
+		/ (a1*b2*c3 - a1*b3*c2 - a2*b1*c3 + a2*b3*c1 + a3*b1*c2 - a3*b2*c1);
+	centerpoint[2] = -(a1*b2*d3 - a1*b3*d2 - a2*b1*d3 + a2*b3*d1 + a3*b1*d2 - a3*b2*d1)
+		/ (a1*b2*c3 - a1*b3*c2 - a2*b1*c3 + a2*b3*c1 + a3*b1*c2 - a3*b2*c1);
+
+	tri->radius = sqrt(pow((x1 - centerpoint[0]), 2) + pow((x1 - centerpoint[1]), 2) + pow((x1 - centerpoint[2]), 2));
 }
 
 inline void get_central_point(float3 centralPoint, Triangle* tri)
@@ -175,7 +213,7 @@ inline bool is_pointTri_within_triangle(Triangle* tri, float3 pointTri)
 	float dot12 = Dot(v1, v2);
 	float inverDeno = 1 / (dot00* dot11 - dot01* dot01);
 	float u = (dot11* dot02 - dot01* dot12) * inverDeno;
-	if (u < 0 || u > 1) // if u out of range, return directly  经过修改，去除点在边长的情况（包括顶点）
+	if (u < 0 || u > 1) // if u out of range, return directly  添加了"="，去除在顶点的情况
 	{
 		return false;
 	}
@@ -285,14 +323,14 @@ inline bool line_triangle_intersert_inSamePlane(Triangle* tri, float3 f1, float3
 inline bool triangle_intersert_inSamePlane(Triangle* tri1, Triangle* tri2)
 {
 	//排除共顶点的三角面
-	if (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_1) || is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_2) || is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_3))
-	{
-		return false;
-	}//排除两点共线的情况(包含)
-	else if ((is_pointTri_within_triangle(tri1, tri2->Vertex_1) && is_pointTri_within_triangle(tri1, tri2->Vertex_2))||(is_pointTri_within_triangle(tri1, tri2->Vertex_1) && is_pointTri_within_triangle(tri1, tri2->Vertex_3))||(is_pointTri_within_triangle(tri1, tri2->Vertex_3) && is_pointTri_within_triangle(tri1, tri2->Vertex_2)))
-	{
-		return false;
-	}
+	//if (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_1) || is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_2) || is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_3))
+	//{
+	//	return false;
+	//}//排除两点共线的情况(包含)
+	//else if ((is_pointTri_within_triangle(tri1, tri2->Vertex_1) && is_pointTri_within_triangle(tri1, tri2->Vertex_2))||(is_pointTri_within_triangle(tri1, tri2->Vertex_1) && is_pointTri_within_triangle(tri1, tri2->Vertex_3))||(is_pointTri_within_triangle(tri1, tri2->Vertex_3) && is_pointTri_within_triangle(tri1, tri2->Vertex_2)))
+	//{
+	//	return false;
+	//}
 
 	//排除正确的边关系,两点在三角面上
 	//if (is_pointTri_within_triangle(tri1,tri2->Vertex_1)&&is_pointTri_within_triangle(tri1,tri2->Vertex_2)&&!is_pointTri_within_triangle(tri1,tri2->Vertex_3))
@@ -347,7 +385,7 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 		return NONINTERSECT;
 	}
 
-	////设tri1所在的平面为p1,tri2所在的平面为p2  
+	////设tri1所在的平面为p1,tri2所在的平面为p2
 	float p1_tri2_vertex1 = get_vector4_det(tri1->Vertex_1, tri1->Vertex_2, tri1->Vertex_3, tri2->Vertex_1);
 
 	float p1_tri2_vertex2 = get_vector4_det(tri1->Vertex_1, tri1->Vertex_2, tri1->Vertex_3, tri2->Vertex_2);
@@ -379,64 +417,64 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 		}
 	}
 
-	if (p1_tri2_vertex1 == 0 && p1_tri2_vertex2 * p1_tri2_vertex3 > 0)
-	{
-		if (is_pointTri_within_triangle(tri1, tri2->Vertex_1))
-		{
-			if (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_1))
-			{
-				return NONINTERSECT;//排除一点在面上但是与其中一顶点重合
-			}
-			else
-			{
-				qDebug() << "asdhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa111111111111111111";
-				return INTERSECT;
-			}
-			
-		}
-		else
-		{
-			return NONINTERSECT;
-		}
-	}
-	else if (p1_tri2_vertex2 == 0 && p1_tri2_vertex1 * p1_tri2_vertex3 > 0)
-	{
-		if (is_pointTri_within_triangle(tri1, tri2->Vertex_2))
-		{
-			if (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_2))
-			{
-				return NONINTERSECT;//一点在面上但是与其中一顶点重合
-			}
-			else
-			{
-				qDebug() << "asdhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa2222222222222222222";
-				return INTERSECT;
-			}
-		}
-		else
-		{
-			return NONINTERSECT;
-		}
-	}
-	else if (p1_tri2_vertex3 == 0 && p1_tri2_vertex1 * p1_tri2_vertex2 > 0)
-	{
-		if (is_pointTri_within_triangle(tri1, tri2->Vertex_3))
-		{
-			if (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_3))
-			{
-				return NONINTERSECT;//一点在面上但是与其中一顶点重合
-			}
-			else
-			{
-				qDebug() << "asdhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa33333333333333333";
-				return INTERSECT;
-			}
-		}
-		else
-		{
-			return NONINTERSECT;
-		}
-	}
+	//if (p1_tri2_vertex1 == 0 && p1_tri2_vertex2 * p1_tri2_vertex3 > 0)
+	//{
+	//	if (is_pointTri_within_triangle(tri1, tri2->Vertex_1))
+	//	{
+	//		if (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_1))
+	//		{
+	//			return NONINTERSECT;//排除一点在面上但是与其中一顶点重合
+	//		}
+	//		else
+	//		{
+	//			qDebug() << "asdhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa111111111111111111";
+	//			return INTERSECT;
+	//		}
+	//		
+	//	}
+	//	else
+	//	{
+	//		return NONINTERSECT;
+	//	}
+	//}
+	//else if (p1_tri2_vertex2 == 0 && p1_tri2_vertex1 * p1_tri2_vertex3 > 0)
+	//{
+	//	if (is_pointTri_within_triangle(tri1, tri2->Vertex_2))
+	//	{
+	//		if (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_2))
+	//		{
+	//			return NONINTERSECT;//一点在面上但是与其中一顶点重合
+	//		}
+	//		else
+	//		{
+	//			qDebug() << "asdhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa2222222222222222222";
+	//			return INTERSECT;
+	//		}
+	//	}
+	//	else
+	//	{
+	//		return NONINTERSECT;
+	//	}
+	//}
+	//else if (p1_tri2_vertex3 == 0 && p1_tri2_vertex1 * p1_tri2_vertex2 > 0)
+	//{
+	//	if (is_pointTri_within_triangle(tri1, tri2->Vertex_3))
+	//	{
+	//		if (is_pointTri_within_triangle_vectex(tri1, tri2->Vertex_3))
+	//		{
+	//			return NONINTERSECT;//一点在面上但是与其中一顶点重合
+	//		}
+	//		else
+	//		{
+	//			qDebug() << "asdhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa33333333333333333";
+	//			return INTERSECT;
+	//		}
+	//	}
+	//	else
+	//	{
+	//		return NONINTERSECT;
+	//	}
+	//}
 //
 //	//处理一条边在另三角面中的情况
 //	if (p1_tri2_vertex1 == 0 && p1_tri2_vertex2==0 && p1_tri2_vertex3 !=0)
@@ -504,65 +542,65 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 		return NONINTERSECT;
 	}
 
-	if (p2_tri1_vertex1 == 0 && p2_tri1_vertex2 * p2_tri1_vertex3 > 0)
-	{
-		if (is_pointTri_within_triangle(tri2, tri1->Vertex_1))
-		{
-			if (is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_1))
-			{
-				return NONINTERSECT;//一点在面上但是与其中一顶点重合
-			}
-			else
-			{
-				qDebug() << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11";
-				return INTERSECT;
-			}
-		}
-		else
-		{
-			return NONINTERSECT;
-		}
-	}
+	//if (p2_tri1_vertex1 == 0 && p2_tri1_vertex2 * p2_tri1_vertex3 > 0)
+	//{
+	//	if (is_pointTri_within_triangle(tri2, tri1->Vertex_1))
+	//	{
+	//		if (is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_1))
+	//		{
+	//			return NONINTERSECT;//一点在面上但是与其中一顶点重合
+	//		}
+	//		else
+	//		{
+	//			qDebug() << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11";
+	//			return INTERSECT;
+	//		}
+	//	}
+	//	else
+	//	{
+	//		return NONINTERSECT;
+	//	}
+	//}
 
-	if (p2_tri1_vertex2 == 0 && p2_tri1_vertex1 * p2_tri1_vertex3 > 0)
-	{
-		if (is_pointTri_within_triangle(tri2, tri1->Vertex_2))
-		{
-			if (is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_2))
-			{
-				return NONINTERSECT;//一点在面上但是与其中一顶点重合
-			}
-			else
-			{
-				qDebug() << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa22";
-				return INTERSECT;
-			}
-		}
-		else
-		{
-			return NONINTERSECT;
-		}
-	}
+	//if (p2_tri1_vertex2 == 0 && p2_tri1_vertex1 * p2_tri1_vertex3 > 0)
+	//{
+	//	if (is_pointTri_within_triangle(tri2, tri1->Vertex_2))
+	//	{
+	//		if (is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_2))
+	//		{
+	//			return NONINTERSECT;//一点在面上但是与其中一顶点重合
+	//		}
+	//		else
+	//		{
+	//			qDebug() << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa22";
+	//			return INTERSECT;
+	//		}
+	//	}
+	//	else
+	//	{
+	//		return NONINTERSECT;
+	//	}
+	//}
 
-	if (p2_tri1_vertex3 == 0 && p2_tri1_vertex1 * p2_tri1_vertex2 > 0)
-	{
-		if (is_pointTri_within_triangle(tri2, tri1->Vertex_3))
-		{
-			if (is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_3))
-			{
-				return NONINTERSECT;//一点在面上但是与其中一顶点重合
-			}
-			else
-			{
-				qDebug() << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa33";
-				return INTERSECT;
-			}
-		}
-		else
-		{
-			return NONINTERSECT;
-		}
-	}
+	//if (p2_tri1_vertex3 == 0 && p2_tri1_vertex1 * p2_tri1_vertex2 > 0)
+	//{
+	//	if (is_pointTri_within_triangle(tri2, tri1->Vertex_3))
+	//	{
+	//		if (is_pointTri_within_triangle_vectex(tri2, tri1->Vertex_3))
+	//		{
+	//			return NONINTERSECT;//一点在面上但是与其中一顶点重合
+	//		}
+	//		else
+	//		{
+	//			qDebug() << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa33";
+	//			return INTERSECT;
+	//		}
+	//	}
+	//	else
+	//	{
+	//		return NONINTERSECT;
+	//	}
+	//}
 //
 //	//处理一条边在另三角面中的情况
 //	if (p2_tri1_vertex1 == 0 && p2_tri1_vertex2 == 0 && p2_tri1_vertex3 != 0)

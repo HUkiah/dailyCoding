@@ -351,6 +351,7 @@ bool Mesh3D::LoadFromOBJFile(const char* fins)//读取obj文件
 				}
 				if ((int)s_faceid.size() >= 3)
 				{
+
 					Triangle tri;
 					tri.Vertex_1[0] = s_faceid[0]->position().x();
 					tri.Vertex_1[1] = s_faceid[0]->position().y();
@@ -364,34 +365,8 @@ bool Mesh3D::LoadFromOBJFile(const char* fins)//读取obj文件
 					tri.Vertex_3[1] = s_faceid[2]->position().y();
 					tri.Vertex_3[2] = s_faceid[2]->position().z();
 
-
-					//此时已决定不再将不绘制的面进行比较
-					for (int j = 1;j < Tria.size();j++)
-					{
-
-						//此时已决定不再将不合适的面绘制出来
-						if (Tria[j].selected == 1)
-						{
-							continue;
-						}
-						//如果要比对的面是目标面，周围的面则跳过
-						if (is_pointTri_within_triangle_vectex(&tri, Tria[j].Vertex_1) || is_pointTri_within_triangle_vectex(&tri, Tria[j].Vertex_2) || is_pointTri_within_triangle_vectex(&tri, Tria[j].Vertex_3))
-						{
-							continue;
-						}
-						if (judge_triangle_topologicalStructure(&tri, &Tria[j]) == INTERSECT)
-						{
-							n++;
-							tri.selected = 1;
-
-							//pfaces_list_[j][0]->FaceIntersect = true;
-							s_faceid[0]->FaceIntersect = true;
-
-						}
-
-					}
-
 					Tria.push_back(tri);
+
 					InsertFace(s_faceid);
 				}
 			}
@@ -457,8 +432,25 @@ bool Mesh3D::LoadFromOBJFile(const char* fins)//读取obj文件
 				}
 			}
 		}
+		//标记面
+		for (int i = 0;i< Tria.size();i++)
+		{
+			//此时已决定不再将不绘制的面进行比较
+			for (int j = 0;j < Tria.size();j++)
+			{
+				if (judge_triangle_topologicalStructure(&Tria[i], &Tria[j]) == INTERSECT)
+				{
+					if (Tria[j].selected == 0)
+					{
+						Tria[i].selected = 1;
+						Tria[j].selected = 1;
+					}
 
+				}
 
+			}
+
+		}
 
 		UpdateMesh();
 		Unify(2.f);
@@ -616,83 +608,30 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 			}
 		}
 
-					for (int i=0;i< Tria.size();i++)
+		for (int i = 0;i < Tria.size();i++)
+		{
+			//此时已决定不再将不绘制的面进行比较
+			for (int j = 0;j < Tria.size();j++)
+			{
+				if (Tria[j].selected == 1) 
+				{
+				continue;
+				}
+
+				n++;
+				if (judge_triangle_topologicalStructure(&Tria[i], &Tria[j]) == INTERSECT)
+				{
+					if (Tria[j].selected == 0)
 					{
-						
-						//此时已决定不再将不绘制的面进行比较
-						for (int j = 0;j < Tria.size();j++)
-						{
-							//此时已决定不再将不合适的面绘制出来
-							//if (Tria[j].selected == 1)
-							//{
-							//continue;
-							//}
-							
-
-		
-
-							//如果要比对的面是目标面，周围的面则跳过,包括它本身
-							/*	if (is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_1))
-							{
-								if (is_pointTri_within_triangle(&Tria[i],Tria[j].Vertex_2)&& !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_2))
-								{
-									continue;
-								}
-								else if (is_pointTri_within_triangle(&Tria[i], Tria[j].Vertex_3) && !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_3))
-								{
-									continue;
-								}
-								else
-								{
-									continue;
-								}
-								
-							}
-							else if (is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_2))
-							{
-								if (is_pointTri_within_triangle(&Tria[i], Tria[j].Vertex_1) && !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_1))
-								{
-									;
-								}
-								else if (is_pointTri_within_triangle(&Tria[i], Tria[j].Vertex_3) && !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_3))
-								{
-									;
-								}
-								else
-								{
-									continue;
-								}
-							}
-							else if(is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_3))
-							{
-								if (is_pointTri_within_triangle(&Tria[i], Tria[j].Vertex_1) && !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_1))
-								{
-									;
-								}
-								else if (is_pointTri_within_triangle(&Tria[i], Tria[j].Vertex_2) && !is_pointTri_within_triangle_vectex(&Tria[i], Tria[j].Vertex_2))
-								{
-									;
-								}
-								else
-								{
-									continue;
-								}
-							}*/
-
-							n++;
-							if (judge_triangle_topologicalStructure(&Tria[i], &Tria[j]) == INTERSECT)
-							{
-								if (Tria[j].selected==0)
-								{
-									Tria[i].selected = 1;
-									Tria[j].selected = 1;
-								}
-									
-							}
-
-						}
-
+						Tria[i].selected = 1;
+						//Tria[j].selected = 1;
 					}
+
+				}
+
+			}
+
+		}
 
 		qDebug() << "w Tria=" << Tria.size()<<"n="<<n << "\n";
 	}
