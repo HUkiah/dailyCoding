@@ -24,3 +24,5 @@
 ### 11.2017/8/23 还是决定实现包围盒进行处理，避免太多的循环检测，出现的不可控问题。Triangle class添加了center，radius构建包围球.
 ---
 ### 12.2017/8/23 转移到Meshprint上进行整合开发，Dialog与Mainwindow之间的消息传递.
+---
+### 13.2017/8/28 calculate the volume DEMO,尝试构建八叉树
