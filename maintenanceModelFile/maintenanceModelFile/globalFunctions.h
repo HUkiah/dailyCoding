@@ -31,6 +31,8 @@ extern float scaleT;
 extern int sss;
 extern int fildID;
 
+extern int intersectNum;//
+
 template<class object>
 void SafeDelete(object *ptr)
 {

@@ -30,3 +30,5 @@
 ### 14.2017/8/29 review AABB support octree
 ---
 ### 15.2017/8/30 modify Triangle.h nothing happened
+---
+### 16.2017/8/31 发现一个bug,或许是我对网格间复杂关系没有考虑周全，在相交检测上会使共面的面片打上标记.

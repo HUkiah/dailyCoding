@@ -25,3 +25,4 @@ float scaleV = 0.8;
 float scaleT = 1.0;
 int sss = 0;
 int fildID = 0;
+int intersectNum = 0;

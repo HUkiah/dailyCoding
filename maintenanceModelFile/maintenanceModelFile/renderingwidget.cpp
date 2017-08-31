@@ -112,7 +112,8 @@ void RenderingWidget::SetLight()
 															//GLfloat LightSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f };   /**< 镜面光参数 */
 
 
-	GLfloat LightPosition[] = { 0.0f, -1.414f, 1.0f, 0.0f };   /**< 光源位置 */
+	GLfloat LightPosition0[] = { 0.0f, -1.414f, 1.0f, 0.0f };   /**< 光源位置 */
+	GLfloat LightPosition1[] = { 1.0f, 1.414f, 0.0f, 0.0f };   /**< 光源位置 */
 
 	GLfloat lmodel_ambient[] = { 0.5f, 0.5f, 0.5f, 1.0f };
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);//选择光照模型：其包括四项内容
@@ -124,15 +125,18 @@ void RenderingWidget::SetLight()
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);//把无限远的观察点改为局部观察点
 
 														/** 设置光源的属性值 */
-	glLightfv(GL_LIGHT0, GL_POSITION, LightPosition);
+	glLightfv(GL_LIGHT0, GL_POSITION, LightPosition0);
+	glLightfv(GL_LIGHT1, GL_POSITION, LightPosition1);
 	//glLightfv(GL_LIGHT0, GL_AMBIENT, LightAmbient);     /**< 设置环境光 */
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, LightDiffuse);     /**< 设置漫射光 */
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuse);
 														//glLightfv(GL_LIGHT0, GL_SPECULAR, LightSpecular);   /**< 设置漫射光 */
 
 
 														/** 启用光源 */
 	glEnable(GL_LIGHTING);//启用光照 
 	glEnable(GL_LIGHT0);//启用指定光源
+	glEnable(GL_LIGHT1);//启用指定光源
 
 }
 

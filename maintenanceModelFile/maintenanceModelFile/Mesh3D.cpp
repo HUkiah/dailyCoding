@@ -206,7 +206,7 @@ HE_face* Mesh3D::InsertFace(std::vector<HE_vert* >& vec_hv)
 	}
 
 	HE_face *pface = new HE_face;
-	pface->FaceIntersect = vec_hv[0]->FaceIntersect;
+	pface->FaceIntersect = vec_hv[0]->FaceIntersect;//this is modified by han
 	///////////////////////////////////////////////////
 	pface->valence_ = vsize;
 	//HE_edge *bhe[3];
@@ -240,7 +240,7 @@ HE_face* Mesh3D::InsertFace(std::vector<HE_vert* >& vec_hv)
 		he3_pair_->pnext_ = he2_pair_;
 		he3_pair_->pprev_ = he1_pair_;
 		he3_pair_->pface_ = pface;
-		//qDebug() << pface->pedge_->id() << pface->pedge_->pnext_->id() << pface->pedge_->pnext_->pnext_->id();
+	//  qDebug() << pface->pedge_->id() << pface->pedge_->pnext_->id() << pface->pedge_->pnext_->pnext_->id();
 		HE_edge *current = pface->pedge_->pnext_->pnext_;
 	//	qDebug() << current->pnext_->id();
 		vec_hv[0]->adjHEdges.push_back(he1);
@@ -593,7 +593,7 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 					tri.Vertex_3[0] = s_faceid[2]->position().x();
 					tri.Vertex_3[1] = s_faceid[2]->position().y();
 					tri.Vertex_3[2] = s_faceid[2]->position().z();
-					
+					//get_center_point_of_circle(&tri);
 					Tria.push_back(tri);
 
 					InsertFace(s_faceid)/*->normal_=normal*/;
@@ -608,32 +608,30 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 			}
 		}
 
-		for (int i = 0;i < Tria.size();i++)
+		for (int i = 0;i < 100;i++)
 		{
 			//此时已决定不再将不绘制的面进行比较
 			for (int j = 0;j < Tria.size();j++)
 			{
-				if (Tria[j].selected == 1) 
+				
+				if (Tria[j].selected == 1) //此处的i看似没有用，其实判定的是标记后的i，搜索会越来越快
 				{
 				continue;
 				}
-
-				n++;
+				
 				if (judge_triangle_topologicalStructure(&Tria[i], &Tria[j]) == INTERSECT)
 				{
-					if (Tria[j].selected == 0)
-					{
+						n++;
 						Tria[i].selected = 1;
-						//Tria[j].selected = 1;
-					}
-
+						//Tria[i].selected = 1;
+						break;
 				}
 
 			}
 
 		}
 
-		qDebug() << "w Tria=" << Tria.size()<<"n="<<n << "\n";
+		qDebug() << "w Tria=" << Tria.size()<<"n="<<n << "异面共线:"<< intersectNum <<"\n";
 	}
 
 	// read Binary .stl file
