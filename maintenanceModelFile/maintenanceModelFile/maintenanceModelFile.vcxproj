@@ -220,6 +220,7 @@
     <ClInclude Include="Mesh3D.h" />
     <ClInclude Include="MeshBase.h" />
     <ClInclude Include="Triangle.h" />
+    <ClInclude Include="TriangleVar.h" />
     <ClInclude Include="Vec.h" />
     <CustomBuild Include="renderingwidget.h">
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Moc%27ing renderingwidget.h...</Message>

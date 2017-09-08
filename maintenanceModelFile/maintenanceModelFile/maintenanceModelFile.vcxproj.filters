@@ -102,5 +102,8 @@
     <ClInclude Include="MeshBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TriangleVar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

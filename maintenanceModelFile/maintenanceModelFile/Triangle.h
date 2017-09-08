@@ -7,10 +7,9 @@
 
 typedef trimesh::vec3  Vec3f;
 
-
 enum TopologicalStructure
 {
-	INTERSECT,NONINTERSECT
+	INTERSECT, NONINTERSECT
 };
 
 class Triangle
@@ -50,11 +49,11 @@ inline float twoPointDistance(Vec3f a, Vec3f b) {
 
 //判断两点是否相等
 inline bool is_equal_vertex(Vec3f pointTri1, Vec3f pointTri2) {
-	if (pointTri1==pointTri2)
+	if (pointTri1 == pointTri2)
 	{
 		return true;
 	}
-	else 
+	else
 	{
 		return false;
 	}
@@ -81,7 +80,7 @@ inline float get_vector4_det(Vec3f v1, Vec3f v2, Vec3f v3, Vec3f v4)
 
 //利用叉积计算点p相对线段p1p2的方位  
 inline double direction(pointTri p1, pointTri p2, pointTri p) {
-	return  (p2.x - p1.x) * (p.y - p1.y)-(p.x - p1.x) * (p2.y - p1.y);
+	return  (p2.x - p1.x) * (p.y - p1.y) - (p.x - p1.x) * (p2.y - p1.y);
 }
 
 //确定与线段p1p2共线的点p是否在线段p1p2上  
@@ -91,7 +90,7 @@ inline int on_segment(pointTri p1, pointTri p2, pointTri p) {
 	double max1 = p1.y > p2.y ? p1.y : p2.y;
 	double min1 = p1.y < p2.y ? p1.y : p2.y;
 
-	if (p.x >=min && p.x <= max && p.y >= min1 && p.y <= max1)//修改 去除“=”,除去共线点，与顶点相同
+	if (p.x >= min && p.x <= max && p.y >= min1 && p.y <= max1)//修改 去除“=”,除去共线点，与顶点相同
 	{
 		//在二维空间中去控制 边，点的关系，是糟糕的想法（就是上面注释的想法）
 		return 1;
@@ -105,7 +104,7 @@ inline int on_segment(pointTri p1, pointTri p2, pointTri p) {
 inline void get_center_point_of_circle(Triangle* tri)
 {
 	Vec3f centerpoint_var;
-	
+
 	double a1, b1, c1, d1;
 	double a2, b2, c2, d2;
 	double a3, b3, c3, d3;
@@ -167,7 +166,7 @@ inline float Dot(const Vec3f& v1, const Vec3f& v2)
 //判断点与线段p3p4是否共线的主函数  
 inline int segments_collinear(Vec3f p1, Vec3f p2) {
 	Vec3f p;
-	if (p1.cross(p2)==p)
+	if (p1.cross(p2) == p)
 	{
 		return 1;
 	}
@@ -243,8 +242,9 @@ inline bool is_pointTri_within_triangle_vectex(Triangle *tri, Vec3f pointTri) {
 		return false;
 	}
 }
+
 //判断点是否和三角形的一边共线
-inline bool is_pointTri_within_triangle_inSameEdgeLine(Triangle *tri, Vec3f f1,Vec3f f2) {
+inline bool is_pointTri_within_triangle_inSameEdgeLine(Triangle *tri, Vec3f f1, Vec3f f2) {
 
 	Vec3f pa1, pb1, pa2, pb2, pa3, pb3;
 
@@ -272,7 +272,7 @@ inline bool is_pointTri_within_triangle_inSameEdgeLine(Triangle *tri, Vec3f f1,V
 		if (segments_collinear(pa1, pb1) || segments_collinear(pa2, pb2) || segments_collinear(pa3, pa3)) {
 			return true;
 		}
-		
+
 	}
 	return false;
 }
@@ -280,34 +280,34 @@ inline bool is_pointTri_within_triangle_inSameEdgeLine(Triangle *tri, Vec3f f1,V
 //针对model紧凑的三角面片的特点进行排除处理,对于没有满足要求的点，我不能说他不合适，还要继续下一步
 inline bool need_triangle_rule_out(Triangle *tri, Vec3f f1, Vec3f f2) {
 
-//if 线段与三角面上的一条边共线
+	//if 线段与三角面上的一条边共线
 
 	//if 两点都在三角面内（这个时候已经在都在同一条边上了）
-			//return NOINTERSECT
+	//return NOINTERSECT
 	//else if 只有一点在三角面上
-			//if 是顶点
-				//return NONINTERSECT
+	//if 是顶点
+	//return NONINTERSECT
 
-		if (is_pointTri_within_triangle(tri, f1) && is_pointTri_within_triangle(tri, f2))
+	if (is_pointTri_within_triangle(tri, f1) && is_pointTri_within_triangle(tri, f2))
+	{
+		return true;//NONINTERSECT
+	}
+	else if (is_pointTri_within_triangle(tri, f1))
+	{
+		if (is_pointTri_within_triangle_vectex(tri, f1))
 		{
-			return true;//NONINTERSECT
+			return true;
 		}
-		else if (is_pointTri_within_triangle(tri, f1))
+	}
+	else if (is_pointTri_within_triangle(tri, f2))
+	{
+		if (is_pointTri_within_triangle_vectex(tri, f2))
 		{
-			if (is_pointTri_within_triangle_vectex(tri, f1))
-			{
-				return true;
-			}
+			return true;
 		}
-		else if (is_pointTri_within_triangle(tri, f2))
-		{
-			if (is_pointTri_within_triangle_vectex(tri, f2))
-			{
-				return true;
-			}
-		}
+	}
 
-		return false;
+	return false;
 
 
 }
@@ -315,21 +315,21 @@ inline bool need_triangle_rule_out(Triangle *tri, Vec3f f1, Vec3f f2) {
 //判断同一平面的直线和三角形是否相交  
 inline bool line_triangle_intersert_inSamePlane(Triangle* tri, Vec3f f1, Vec3f f2)
 {
-//先判断点在三角形的内部，且是在三角形的边上
+	//先判断点在三角形的内部，且是在三角形的边上
 
-//if 线段与三角面上的一条边共线
-	if (is_pointTri_within_triangle_inSameEdgeLine(tri, f1,f2))
+	//if 线段与三角面上的一条边共线
+	if (is_pointTri_within_triangle_inSameEdgeLine(tri, f1, f2))
 	{
 		if (need_triangle_rule_out(tri, f1, f2))
 		{
 			return false;//NONINTERSECT
 		}
-	
+
 	}
 
 
 
-//则判断对应的三角面上的点在不在这个三角面上
+	//则判断对应的三角面上的点在不在这个三角面上
 
 	//a:XY面 b:XZ面 c:YZ面
 	pointTri pa1, pa2, pb1, pb2, pc1, pc2, pa3, pa4, pb3, pb4, pc3, pc4;
@@ -364,7 +364,7 @@ inline bool line_triangle_intersert_inSamePlane(Triangle* tri, Vec3f f1, Vec3f f
 
 	copy_pointYZ(pc4, tri->Vertex_2);
 
-	if (segments_intersert(pa1, pa2, pa3, pa4)&& segments_intersert(pb1, pb2, pb3, pb4)&& segments_intersert(pc1, pc2, pc3, pc4))
+	if (segments_intersert(pa1, pa2, pa3, pa4) && segments_intersert(pb1, pb2, pb3, pb4) && segments_intersert(pc1, pc2, pc3, pc4))
 	{
 		return true;
 	}
@@ -412,7 +412,7 @@ inline bool line_triangle_intersert_inSamePlane(Triangle* tri, Vec3f f1, Vec3f f
 
 //判断同一平面内的三角形是否相交  
 inline bool triangle_intersert_inSamePlane(Triangle* tri1, Triangle* tri2)
-{	
+{
 
 
 	if (line_triangle_intersert_inSamePlane(tri2, tri1->Vertex_1, tri1->Vertex_2))
@@ -442,7 +442,6 @@ inline bool triangle_intersert_inSamePlane(Triangle* tri1, Triangle* tri2)
 		return false;
 	}
 }
-
 
 //Devillers算法主函数  
 inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, Triangle* tri2)
@@ -477,7 +476,7 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 	{
 		if (triangle_intersert_inSamePlane(tri1, tri2))
 		{
-			return INTERSECT;
+			return NONINTERSECT;/////////////////////////
 		}
 		else
 		{
@@ -513,13 +512,11 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 			{
 				return NONINTERSECT;
 			}
-		}				
+		}
 	}
 	//异面三角面，共线
 	if (p1_tri2_vertex2 == 0 && p1_tri2_vertex3 == 0)
 	{
-
-
 		//if 线段与三角面上的一条边共线
 		if (is_pointTri_within_triangle_inSameEdgeLine(tri1, tri2->Vertex_2, tri2->Vertex_3))
 		{
@@ -541,9 +538,9 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 			}
 			else
 			{
-				return INTERSECT;
+				return NONINTERSECT; /////////////////////////////
 			}
-			
+
 		}
 		else
 		{
@@ -560,7 +557,7 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 			}
 			else
 			{
-				return INTERSECT;
+				return NONINTERSECT;//////////////////////////
 			}
 		}
 		else
@@ -578,7 +575,7 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 			}
 			else
 			{
-				return INTERSECT;
+				return NONINTERSECT; ///////////////////////////
 			}
 		}
 		else
@@ -661,8 +658,8 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 			}
 			else
 			{
- 
-				return INTERSECT;
+
+				return NONINTERSECT; ////////////////////////////
 			}
 		}
 		else
@@ -681,8 +678,8 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 			}
 			else
 			{
- 
-				return INTERSECT;
+
+				//return INTERSECT;
 			}
 		}
 		else
@@ -701,8 +698,8 @@ inline TopologicalStructure judge_triangle_topologicalStructure(Triangle* tri1, 
 			}
 			else
 			{
- 
-				return INTERSECT;
+
+				//return INTERSECT;
 			}
 		}
 		else

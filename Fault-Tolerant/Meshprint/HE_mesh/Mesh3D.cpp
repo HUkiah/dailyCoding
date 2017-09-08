@@ -20,14 +20,12 @@
 #include <qmath.h>
 #include <QTime>
 #include "globalFunctions.h"
-#include "..\..\..\HalfEdgeDS\Fault-Tolerant\Meshprint\globalFunctions.h"
 
+#include <iomanip>
 #pragma comment(lib,"ws2_32.lib")
 #define SWAP(a,b,T) {T tmp=(a); (a)=(b); (b)=tmp;}
 #define min(a,b) a<b?a:b
 #define max(a,b) a>b?a:b
-
-
 
 Mesh3D::Mesh3D(void)
 {
@@ -37,7 +35,7 @@ Mesh3D::Mesh3D(void)
 	pedges_list_ = new std::vector<HE_edge*>;
 	bheList = new std::vector<HE_edge*>;
 	iheList = new std::vector<HE_edge*>;
-
+	
 	//input_vertex_list_ = NULL;
 	xmax_ = ymax_ = zmax_ = 1.f;
 	xmin_ = ymin_ = zmin_ = -1.f;
@@ -51,15 +49,13 @@ void Mesh3D::ClearData(void)
 	ClearVertex();
 	ClearEdges();
 	ClearFaces();
-
-	Tria.clear();
-	
 	input_vertex_list_.clear();
 	edgemap_.clear();
 	xmax_ = ymax_ = zmax_ = 1.f;
 	xmin_ = ymin_ = zmin_ = -1.f;
 	bLoop.clear();
 	bheList->clear();
+	Tria.clear();
 }
 
 void Mesh3D::ClearVertex(void)
@@ -186,7 +182,6 @@ HE_edge* Mesh3D::InsertEdge(HE_vert* vstart, HE_vert* vend)
 	pedge->pvert_->degree_++;
 	vstart->pedge_ = pedge;
 	edgemap_[PAIR_VERTEX(vstart, vend)] = pedge;
-	//qDebug() << edgemap_.size();
 	pedge->id_ = static_cast<int>(pedges_list_->size());
 	pedges_list_->push_back(pedge);
 
@@ -207,8 +202,6 @@ HE_face* Mesh3D::InsertFace(std::vector<HE_vert* >& vec_hv)
 	}
 
 	HE_face *pface = new HE_face;
-	pface->FaceIntersect = vec_hv[0]->FaceIntersect;//this is modified by han
-	///////////////////////////////////////////////////
 	pface->valence_ = vsize;
 	//HE_edge *bhe[3];
 	HE_edge *he1 = NULL, *he2 = NULL, *he3 = NULL, *he1_pair_ = NULL, *he2_pair_ = NULL, *he3_pair_ = NULL;
@@ -241,7 +234,7 @@ HE_face* Mesh3D::InsertFace(std::vector<HE_vert* >& vec_hv)
 		he3_pair_->pnext_ = he2_pair_;
 		he3_pair_->pprev_ = he1_pair_;
 		he3_pair_->pface_ = pface;
-	//  qDebug() << pface->pedge_->id() << pface->pedge_->pnext_->id() << pface->pedge_->pnext_->pnext_->id();
+		//qDebug() << pface->pedge_->id() << pface->pedge_->pnext_->id() << pface->pedge_->pnext_->pnext_->id();
 		HE_edge *current = pface->pedge_->pnext_->pnext_;
 	//	qDebug() << current->pnext_->id();
 		vec_hv[0]->adjHEdges.push_back(he1);
@@ -288,7 +281,6 @@ HE_face* Mesh3D::InsertFace(std::vector<HE_vert* >& vec_hv)
 bool Mesh3D::LoadFromOBJFile(const char* fins)//读取obj文件
 {
 	FILE *pfile = fopen(fins, "r");
-	int n = 0;
 
 	char *tok;
 	//char *tok_tok;
@@ -352,22 +344,6 @@ bool Mesh3D::LoadFromOBJFile(const char* fins)//读取obj文件
 				}
 				if ((int)s_faceid.size() >= 3)
 				{
-
-					Triangle tri;
-					tri.Vertex_1[0] = s_faceid[0]->position().x();
-					tri.Vertex_1[1] = s_faceid[0]->position().y();
-					tri.Vertex_1[2] = s_faceid[0]->position().z();
-
-					tri.Vertex_2[0] = s_faceid[1]->position().x();
-					tri.Vertex_2[1] = s_faceid[1]->position().y();
-					tri.Vertex_2[2] = s_faceid[1]->position().z();
-
-					tri.Vertex_3[0] = s_faceid[2]->position().x();
-					tri.Vertex_3[1] = s_faceid[2]->position().y();
-					tri.Vertex_3[2] = s_faceid[2]->position().z();
-
-					Tria.push_back(tri);
-
 					InsertFace(s_faceid);
 				}
 			}
@@ -433,25 +409,8 @@ bool Mesh3D::LoadFromOBJFile(const char* fins)//读取obj文件
 				}
 			}
 		}
-		//标记面
-		for (int i = 0;i< Tria.size();i++)
-		{
-			//此时已决定不再将不绘制的面进行比较
-			for (int j = 0;j < Tria.size();j++)
-			{
-				if (judge_triangle_topologicalStructure(&Tria[i], &Tria[j]) == INTERSECT)
-				{
-					if (Tria[j].selected == 0)
-					{
-						Tria[i].selected = 1;
-						Tria[j].selected = 1;
-					}
 
-				}
 
-			}
-
-		}
 
 		UpdateMesh();
 		Unify(2.f);
@@ -474,7 +433,29 @@ bool Mesh3D::LoadFromOBJFile(const char* fins)//读取obj文件
 	return isValid();
 }
 
+void Mesh3D::MntnMesh(const char* fouts) {
+	//qDebug() << "Maintenance Model !";
+	std::ofstream fout(fouts);
 
+	//fout << "g object\n";
+	//fout.precision(8);
+	fout << "solid 3" << "\n";
+	for (int i = 0; i < num; i++)
+	{
+	//	fout.setf(std::ios::showpoint);
+		//科学计数法
+		fout << "  facet normal " << std::fixed << std::setprecision(4)<< Tria[i].normal.x()<< "  "<< Tria[i].normal.y() << "  " << Tria[i].normal.z() << "\n";
+		fout << "      outer loop" << "\n";
+		fout << "         vertex " << std::fixed << std::setprecision(4)<< Tria[i].Vertex_1.x() << "  " << Tria[i].Vertex_1.y() << "  " << Tria[i].Vertex_1.z() << "\n";
+		fout << "         vertex " << std::fixed << std::setprecision(4)<< Tria[i].Vertex_2.x() << "  " << Tria[i].Vertex_2.y() << "  " << Tria[i].Vertex_2.z() << "\n";
+		fout << "         vertex " << std::fixed << std::setprecision(4)<< Tria[i].Vertex_3.x() << "  " << Tria[i].Vertex_3.y() << "  " << Tria[i].Vertex_3.z() << "\n";
+		fout << "      endloop" << "\n";
+		fout << "  endfacet" << "\n";
+			
+	}
+	fout << "endsolid" << "\n";
+	fout.close();
+}
 
 void Mesh3D::WriteToOBJFile(const char* fouts)
 {
@@ -520,10 +501,12 @@ void Mesh3D::WriteToOBJFile(const char* fouts)
 
 bool Mesh3D::LoadFromSTLFile(const char* fins)
 {
-	int n = 0;
+
 	//支持中文
 	QString filename = QString::fromLocal8Bit(fins);
 	QFile file(filename);
+
+
 	if (!file.open(QIODevice::ReadOnly))
 	{
 
@@ -540,20 +523,43 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 		ClearData();//为什么又执行了一次Clear操作
 		int NUm_vertex = 0, num_facet = 0;
 		std::vector<HE_vert* > s_faceid;
-
 		Vec3f normal;
 		while (!inASCII.atEnd())
 		{
-			QString temp;
+			QString temp,strVar;
 			inASCII >> temp;
-
-			if (temp == "vertex")
+			if (temp == "normal")
+			{
+				inASCII >> normal[0] >> normal[1] >> normal[2];
+				//数据格式化，保留小数点后4位
+				normal[0] = strVar.setNum(normal[0], 'f', 4).toFloat();
+				normal[1] = strVar.setNum(normal[1], 'f', 4).toFloat();
+				normal[2] = strVar.setNum(normal[2], 'f', 4).toFloat();
+			}
+			else if (temp == "vertex")
 			{
 				//qDebug() << NUm_vertex;
 				NUm_vertex++;
 				HE_vert* hv;
-				Vec3f nvv;
+				Vec3f nvv; 
+				inASCII.setRealNumberNotation(QTextStream::FixedNotation);
+				inASCII.setRealNumberPrecision(4);
+
 				inASCII >> nvv[0] >> nvv[1] >> nvv[2];
+
+				//数据格式化，保留小数点后4位
+				nvv[0] = strVar.setNum(nvv[0], 'f', 4).toFloat();
+				nvv[1] = strVar.setNum(nvv[1], 'f', 4).toFloat();
+				nvv[2] = strVar.setNum(nvv[2], 'f', 4).toFloat();
+
+				//nvv[0] = (int)((nvv[0] * 10000) + 0.5) / 10000.0;
+				//nvv[1] = (int)((nvv[1] * 10000) + 0.5) / 10000.0;
+				//nvv[2] = (int)((nvv[2] * 10000) + 0.5) / 10000.0;
+
+				//qDebug() <<scientific<< nvv[0] << nvv[1] << nvv[2];
+				
+				//QString::number(nvv[0], 'f', 4);
+				
 				//now we have a new vertex
 				hv = new HE_vert(nvv);
 				if (pvertices_list_ == NULL)
@@ -585,6 +591,10 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 				if (s_faceid.size() >= 3)
 				{
 					Triangle tri;
+					tri.normal[0] = normal[0];
+					tri.normal[1] = normal[1];
+					tri.normal[2] = normal[2];
+
 					tri.Vertex_1[0] = s_faceid[0]->position().x();
 					tri.Vertex_1[1] = s_faceid[0]->position().y();
 					tri.Vertex_1[2] = s_faceid[0]->position().z();
@@ -596,45 +606,70 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 					tri.Vertex_3[0] = s_faceid[2]->position().x();
 					tri.Vertex_3[1] = s_faceid[2]->position().y();
 					tri.Vertex_3[2] = s_faceid[2]->position().z();
-					//get_center_point_of_circle(&tri);
+					//tri._aabb.updateMinMax(tri.Vertex, 3);
+
 					Tria.push_back(tri);
 
 					InsertFace(s_faceid)/*->normal_=normal*/;
 					num_facet++;
 				}
-
 				s_faceid.clear();
 			}
-			else if (temp == "normal")
-			{
-				inASCII >> normal[0] >> normal[1] >> normal[2];
-			}
 		}
 
-		for (int i = 0;i <Tria.size();i++)
+		//for (int i=0;i<Tria.size();i++)
+		//{
+		//	for (int j=0;j<Tria.size();j++)
+		//	{
+		//		if (j==i)
+		//		{
+		//			continue;
+		//		}
+		//		if (Tria[i]._aabb.intersects(Tria[j]._aabb))
+		//		{
+		//			Tria[i].triVar.push_back(Tria[j]);
+		//		}
+		//	}
+		//}
+		//
+
+		num = 0;
+		for (int i = 0;i < Tria.size();i++)
 		{
-			//此时已决定不再将不绘制的面进行比较
-			for (int j = 0;j < Tria.size();j++)
+			for (int j=0;j < Tria.size();j++)
 			{
-				
-				//if (Tria[j].selected == 1) //此处的i看似没有用，其实判定的是标记后的i，搜索会越来越快
-				//{
-				//continue;
-				//}
-				
+				if (i==j)
+				{
+					continue;  
+				}
+				//两点重合的都不相交
+				//num++;
 				if (judge_triangle_topologicalStructure(&Tria[i], &Tria[j]) == INTERSECT)
 				{
-						n++;
-						Tria[i].selected = 1;
-						//Tria[i].selected = 1;
-						break;
+					Tria[i].selected = 1;
+					Tria[j].selected = 1;
+					//break;
 				}
-
 			}
-
+		}
+		for(int i = 0;i<Tria.size();i++)
+		{
+			if (Tria[i].selected==1)
+			{
+				num++;
+			}
+			//if (i<10)
+			//{
+			//	qDebug() << scientific << "1.." << Tria[i].Vertex_1.x() << "   " << Tria[i].Vertex_1.y() << "   " << Tria[i].Vertex_1.z();
+			//	qDebug() << scientific << "2.." << Tria[i].Vertex_2.x() << "   " << Tria[i].Vertex_2.y() << "   " << Tria[i].Vertex_2.z();
+			//	qDebug() << scientific << "3.." << Tria[i].Vertex_3.x() << "   " << Tria[i].Vertex_3.y() << "   " << Tria[i].Vertex_3.z();
+			//}
 		}
 
-		qDebug() << "w Tria=" << Tria.size()<<"n="<<n << "异面共线:"<< intersectNum <<"\n";
+		qDebug() << "w Tria=" << Tria.size() <<"Num"<<num<<"\n";
+		
+		num = Tria.size();
+
 	}
 
 	// read Binary .stl file
@@ -711,13 +746,13 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 
 	//qDebug() << pvertices_list_->size();
 
-	return isValid();;
+	return isValid();
 }
 
 void Mesh3D::UpdateMesh(void)
 {
-	ComputeBoundingBox();//对vertices做出一些限制10E10,10E-10
-	SetBoundaryFlag();
+	ComputeBoundingBox();//对vertices做出一些限制10E10,10E-10，取得 max,min
+	SetBoundaryFlag();//遍历所有面，对不表示任何面的边打上标记，记录到bheList中
 	BoundaryCheck();
 	countBoundaryComponat();
 	UpdateNormal();
@@ -751,6 +786,7 @@ void Mesh3D::SetBoundaryFlag(void)
 	}
 }
 
+//将处在边界上的点，指到边界边上
 void Mesh3D::BoundaryCheck()
 {
 	for (VERTEX_ITER viter=pvertices_list_->begin(); viter!=pvertices_list_->end(); viter++)
@@ -764,7 +800,7 @@ void Mesh3D::BoundaryCheck()
 				edge = edge->pprev_->ppair_;
 				deg ++;
 			}
-			(*viter)->pedge_ = edge;
+			(*viter)->pedge_ = edge;//将处在边界上的点，指到边界边上
 		}
 	}
 }
@@ -913,7 +949,7 @@ void Mesh3D::ComputePerVertexNormal(HE_vert* hv)
 	}
 	hv->normal_.normalize();
 }
-
+//构建model的边界点（包围盒 2 point）
 void Mesh3D::ComputeBoundingBox(void)
 {
 	if (pvertices_list_->size() < 3)
@@ -939,6 +975,7 @@ void Mesh3D::ComputeBoundingBox(void)
 	}
 }
 
+//重置模型位置
 void Mesh3D::Unify(float size)
 {
 	//qDebug() << "z position" << zmax_;
@@ -1135,7 +1172,6 @@ void Mesh3D::Transformation(float * matrix)
 
 }
 
-
 void Mesh3D::SetDirection(int faceid)
 {
 	if (faceid==-1)
@@ -1189,7 +1225,6 @@ void Mesh3D::SetDirection(int faceid)
 		(*iter)->position().z() = position_[2];
 	}
 }
-
 
 void Mesh3D::ClearSlice()
 {
@@ -1489,8 +1524,6 @@ HE_face* Mesh3D::InsertFaceSup(std::vector<HE_vert* >& vec_hv)
 	pfaces_list_->push_back(f);
 	return f;
 }
-
-
 void Mesh3D::UpdateMeshSup(void)
 {
 	
@@ -1521,7 +1554,6 @@ void Mesh3D::UpdateBList(void)
 	}
 	bheList = list;
 }
-//计算组件
 void Mesh3D::computeComponent()
 {
 	if (bheList == NULL)
@@ -1568,7 +1600,6 @@ void Mesh3D::computeComponent()
 		pfaces_list_->at(i)->set_selected(UNSELECTED);
 	}
 }
-//face DFS  Algorithm
 void Mesh3D::FaceDFS(HE_face* facet, int no)
 {
 	facet->set_selected(SELECTED);

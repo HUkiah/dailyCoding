@@ -275,7 +275,7 @@ void RenderingWidget::DrawFace(bool bv)
 	{
 		if (ptr_mesh_->Tria[i].selected==1)
 		{
-			glColor3f(0.8, 0, 0);
+			glColor3f(0.8,0, 0);
 			HE_edge *pedge(faces.at(i)->pedge_);
 			do
 			{
@@ -296,7 +296,7 @@ void RenderingWidget::DrawFace(bool bv)
 		}
 		else
 		{
-			glColor3f(0, 0.8, 0);
+			glColor3f(0.8, 0.8, 0.8);
 
 
 			HE_edge *pedge(faces.at(i)->pedge_);
@@ -559,6 +559,7 @@ void RenderingWidget::WriteMesh()
 		return;
 	QByteArray byfilename = filename.toLocal8Bit();
 	ptr_mesh_->WriteToOBJFile(byfilename.data());
+
 }
 
 void RenderingWidget::CheckLight()

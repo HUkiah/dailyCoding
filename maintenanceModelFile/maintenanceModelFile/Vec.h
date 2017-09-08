@@ -351,6 +351,8 @@ public:
 		for (size_type i = 0; i < D; i++) swap(v[i], x[i]);
 	}
 
+
+
 	// Outside of class: + - * / % ^ << >> == != < > <= >=
 
 	// Dot product with another vector (also exists as an operator)

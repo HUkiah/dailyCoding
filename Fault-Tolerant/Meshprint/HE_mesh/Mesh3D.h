@@ -1,17 +1,16 @@
-#ifndef MESH3D_MESHPRINT
-#define MESH3D_MESHPRINT
+#pragma once
 
 #include <vector>
 #include <map>
 #include "Vec.h"
 #include <set>
-#include "TriangleVar.h"
+#include "Triangle.h"
 
 // forward declarations of mesh classes
 class HE_vert;
 class HE_edge;
 class HE_face;
-class Triangle;
+
 
 using trimesh::point;
 
@@ -34,6 +33,7 @@ enum BoundaryTag
 	INNER,
 	TO_SPLIT
 };
+
 /*!
 *	The basic vertex class for half-edge structure.
 */
@@ -41,15 +41,13 @@ class HE_vert
 {
 public:
 	int		id_;
-	bool    FaceIntersect;  //判断此面是否与其他面相交的flag
-
 	int		id_in_STL;		//  USE in STL input
 	point	position_;		//!< vertex position
 	Vec3f	normal_;		//!< vertex normal
 	Vec3f	texCoord_;		//!< texture coord
 	Vec4f	color_;
 	HE_edge		*pedge_;		//!< one of the half-edges_list emanating from the vertex
-	int			degree_;
+	int			degree_;		//度. 应该是这个点周围面的个数（点周围有多少个面）
 	BoundaryTag	boundary_flag_;	//!< boundary flag
 	int			selected_;		//!< a tag: whether the vertex is selected
 	std:: vector<HE_edge*> adjHEdges;// for reading object only, do not use it in other place
@@ -60,7 +58,7 @@ public:
 	std::vector<Vec3f> helper;
 public:
 	HE_vert(const Vec3f& v)
-		: id_(-1), FaceIntersect(false), position_(v), pedge_(NULL), degree_(0), boundary_flag_(INNER), selected_(UNSELECTED)
+		: id_(-1), position_(v), pedge_(NULL), degree_(0), boundary_flag_(INNER), selected_(UNSELECTED)
 		, color_(255.f / 255.f, 215.f / 255.f, 0.f/ 255.f, 1.f),neighborIdx()
 	{}
 
@@ -111,6 +109,7 @@ public:
 		, pface_(NULL), pnext_(NULL), pprev_(NULL), boundary_flag_(INNER), is_selected_(false)
 	{}
 
+
 	~HE_edge()
 	{}
 
@@ -127,8 +126,6 @@ class HE_face
 {
 public:
 	int			id_;
-	bool		FaceIntersect;//面相交的flag
-
 	HE_edge		*pedge_;		//!< one of the half-edges_list bordering the face
 	Vec3f		normal_;		//!< face normal
 	int			valence_;		//!< the number of edges_list
@@ -138,7 +135,7 @@ public:
 	int com_flag;
 public:
 	HE_face()
-		: id_(-1),FaceIntersect(false), pedge_(NULL), valence_(0), selected_(UNSELECTED), boundary_flag_(INNER), normal_(0,0,0),com_flag(-1)
+		: id_(-1), pedge_(NULL), valence_(0), selected_(UNSELECTED), boundary_flag_(INNER), normal_(0,0,0),com_flag(-1)
 	{}
 
 	~HE_face()
@@ -156,9 +153,9 @@ public:
 	void			set_boundary_flag(BoundaryTag bt) {boundary_flag_=bt;}
 
 	/*-----------add by wang kang at 2013-10-13-------------*/
-	/*-----------modified by shuai   2016-12-13-------------*/
+	/*-----------modified by shuai   2016-12-13------------*/
 	void face_verts(std::vector<HE_vert *>& verts)
-	{ 
+	{
 		verts.clear();
 		HE_edge* pedge = pedge_;
 
@@ -192,7 +189,7 @@ public:
 	void getBoundingBox(Vec3f& max_out, Vec3f& min_out)
 	{
 		max_out = Vec3f(0, 0, 0);
-		min_out = Vec3f(0, 0, 0);	
+		min_out = Vec3f(0, 0, 0);
 		HE_edge* pedge = pedge_;
 
 		do
@@ -205,12 +202,11 @@ public:
 			min_out.x() = min_out.x() > bb_temp.x() ? bb_temp.x() : min_out.x();
 			min_out.y() = min_out.y() > bb_temp.y() ? bb_temp.y() : min_out.y();
 			min_out.z() = min_out.z() > bb_temp.z() ? bb_temp.z() : min_out.z();
-			
+
 			pedge = pedge->pnext_;
 		} while (pedge != pedge_);
 	}
 };
-
 struct comVertex
 {
 	bool operator ()(HE_vert* a, HE_vert* b)const
@@ -234,7 +230,9 @@ struct comVertex
 		return false;
 	}
 };
+/*!
 
+*/
 class Mesh3D
 {
 	// type definitions
@@ -255,8 +253,6 @@ private:
 	std::vector<HE_edge*>	*bheList;		// list of boundary half egdes
 	std::vector<HE_edge*>	*iheList;		// list of inner half egdes
 	std::vector<std::vector<HE_edge*>>   bLoop;
-	
-	
 	int no_loop;
 	std::set<HE_vert*,comVertex>   input_vertex_list_;// !< strore STL input vertex
 	// mesh info
@@ -273,6 +269,7 @@ public:
 	std::map<std::pair<HE_vert*, HE_vert* >, HE_edge* >    edgemap_;
 
 	std::vector<Triangle> Tria; //用来判断三角面的位置关系
+
 	//! constructor
 	Mesh3D(void);
 
@@ -373,8 +370,7 @@ public:
 	//! export the current mesh to an OBJ format file
 	void WriteToOBJFile(const char* fouts);
 
-
-
+	void MntnMesh(const char* fouts);
 
 	bool LoadFromSTLFile(const char * fins);
 
@@ -545,5 +541,3 @@ public:
 	void FaceDFS(HE_face* facet, int no);
 	std::vector<HE_edge*>* GetBhelist() { return bheList; }
 };
-
-#endif //MESH3D_MESHPRINT
