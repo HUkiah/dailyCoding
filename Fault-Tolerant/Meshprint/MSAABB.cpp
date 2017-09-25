@@ -6,9 +6,9 @@ AABB::AABB()
 	reset();
 }
 
-AABB::AABB(const Vec3f& min, const Vec3f& max)
+AABB::AABB(const Vec3f& max, const Vec3f& min)
 {
-	set(min, max);
+	set(max, min);
 }
 
 AABB::AABB(const AABB& box)
@@ -22,7 +22,6 @@ Vec3f AABB::getCenter()
 	center.x() = 0.5f*(_min.x() + _max.x());
 	center.y() = 0.5f*(_min.y() + _max.y());
 	center.z() = 0.5f*(_min.z() + _max.z());
-
 	return center;
 }
 
@@ -82,7 +81,7 @@ void AABB::merge(const AABB& box)
 	_max.z() = std::max(_max.z(), box._max.z());
 }
 
-void AABB::set(const Vec3f& min, const Vec3f& max)
+void AABB::set(const Vec3f& max, const Vec3f& min)
 {
 	this->_min = min;
 	this->_max = max;
@@ -99,43 +98,63 @@ bool AABB::isEmpty() const
 	return _min.x() > _max.x() || _min.y() > _max.y() || _min.z() > _max.z();
 }
 
-void AABB::updateMinMax(const Vec3f* point, size_t num)
+void AABB::updateMinMax(const Vec3f point)
 {
-	for (size_t i = 0; i < num; i++)
-	{
 		// Leftmost point.
-		if (point[i].x() < _min.x())
-			_min.x() = point[i].x();
-
+		if (point.x() < _min.x())
+			_min.x() = point.x();
 		// Lowest point.
-		if (point[i].y() < _min.y())
-			_min.y() = point[i].y();
-
+		if (point.y() < _min.y())
+			_min.y() = point.y();
 		// Farthest point.
-		if (point[i].z() < _min.z())
-			_min.z() = point[i].z();
-
+		if (point.z() < _min.z())
+			_min.z() = point.z();
 		// Rightmost point.
-		if (point[i].x() > _max.x())
-			_max.x() = point[i].x();
-
+		if (point.x() > _max.x())
+			_max.x() = point.x();
 		// Highest point.
-		if (point[i].y() > _max.y())
-			_max.y() = point[i].y();
-
+		if (point.y() > _max.y())
+			_max.y() = point.y();
 		// Nearest point.
-		if (point[i].z() > _max.z())
-			_max.z() = point[i].z();
-	}
+		if (point.z() > _max.z())
+			_max.z() = point.z();
+
+		//if (point.x() < _min.x()&&point.y()<_min.y()&&point.z()<_min.y())
+		//{
+		//	_min = point;
+		//}
+		//if (point.x()>_max.x()&&point.y()>_max.y()&&point.z()>_max.z())
+		//{
+		//	_max = point;
+		//}
+}
+
+void AABB::expandBoundary() {
+
+//#define MAX_FLOAT_VALUE (static_cast<float>(10e10))
+//#define MIN_FLOAT_VALUE	(static_cast<float>(-10e10))
+//
+//	_max.x() = _max.y() = _max.z() = MIN_FLOAT_VALUE;
+//	_min.x() = _min.y() = _min.z() = MAX_FLOAT_VALUE;
+//
+//	for (int i=0;i<3;i++)
+//	{
+//		_min.x() =std::min(_min.x(), (*viter)->position_.x());
+//		_min.y() = min(_min.y(), (*viter)->position_.y());
+//		_min.z() = min(_min.z(), (*viter)->position_.z());
+//		_max.x() = max(_max.x(), (*viter)->position_.x());
+//		_max.y() = max(_max.y(), (*viter)->position_.y());
+//		_max.z() = max(_max.z(), (*viter)->position_.z());
+//	}
 
 	//扩大包围盒外檐，不至于只是一个面
-	_min.x() = _min.x() - 0.1;
-	_min.y() = _min.y() - 0.1;
-	_min.z() = _min.z() - 0.1;
+	_min.x() = _min.x() - 0.01;
+	_min.y() = _min.y() - 0.01;
+	_min.z() = _min.z() - 0.01;
 
-	_max.x() = _max.x() + 0.1;
-	_max.y() = _max.y() + 0.1;
-	_max.z() = _max.z() + 0.1;
+	_max.x() = _max.x() + 0.01;
+	_max.y() = _max.y() + 0.01;
+	_max.z() = _max.z() + 0.01;
 }
 
 //void AABB::transform(const Mat4& mat)

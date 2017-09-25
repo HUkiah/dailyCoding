@@ -16,6 +16,7 @@ public:
 
 	AABB(const Vec3f& min, const Vec3f& max);
 
+	
 
 	/**
 	* Constructor.
@@ -67,6 +68,11 @@ public:
 	*/
 	void reset();
 
+	/* 
+	*expand Boundary  add 0.01
+	*/
+	void expandBoundary();
+
 	/**
 	* check the AABB object is empty(reset).
 	*/
@@ -75,7 +81,7 @@ public:
 	/**
 	* update the _min and _max from the given point.
 	*/
-	void updateMinMax(const Vec3f* point, size_t num);
+	void updateMinMax(const Vec3f point);
 
 	/**
 	* Transforms the bounding box by the given transformation matrix.

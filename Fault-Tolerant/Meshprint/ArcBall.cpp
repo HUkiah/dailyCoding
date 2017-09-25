@@ -302,7 +302,7 @@ void CArcBall::Init()
 {
 	int i;
 	ball_data.center = qOne;
-	ball_data.radius = 3.0f;
+	ball_data.radius = 2.0f;
 	ball_data.vDown = ball_data.vNow = qOne;
 	ball_data.qDown = ball_data.qNow = qOne;
 	for (i = 15; i >= 0; i--)

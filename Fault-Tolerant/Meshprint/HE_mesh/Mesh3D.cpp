@@ -13,7 +13,6 @@
 #include <iostream>
 #include "Mesh3D.h"
 #include <winsock.h>
-//#include "matrix.h"
 #include <QMatrix4x4>
 #include "QQuaternion"
 #include "qvector.h"
@@ -35,7 +34,8 @@ Mesh3D::Mesh3D(void)
 	pedges_list_ = new std::vector<HE_edge*>;
 	bheList = new std::vector<HE_edge*>;
 	iheList = new std::vector<HE_edge*>;
-	
+
+
 	//input_vertex_list_ = NULL;
 	xmax_ = ymax_ = zmax_ = 1.f;
 	xmin_ = ymin_ = zmin_ = -1.f;
@@ -56,6 +56,12 @@ void Mesh3D::ClearData(void)
 	bLoop.clear();
 	bheList->clear();
 	Tria.clear();
+	num = 0;
+	for (int i = 0;i < PARTTABLENUM;i++)
+	{
+		partitionTable_Z[i].clear();
+	}
+	
 }
 
 void Mesh3D::ClearVertex(void)
@@ -285,6 +291,8 @@ bool Mesh3D::LoadFromOBJFile(const char* fins)//读取obj文件
 	char *tok;
 	//char *tok_tok;
 	char temp[128];
+	
+	num = 0;
 
 	try
 	{
@@ -344,6 +352,31 @@ bool Mesh3D::LoadFromOBJFile(const char* fins)//读取obj文件
 				}
 				if ((int)s_faceid.size() >= 3)
 				{
+
+					Triangle tri;
+					tri._aabb.reset();
+
+					tri.Vertex_1[0] = s_faceid[0]->position().x();
+					tri.Vertex_1[1] = s_faceid[0]->position().y();
+					tri.Vertex_1[2] = s_faceid[0]->position().z();
+					tri._aabb.updateMinMax(tri.Vertex_1);
+
+					tri.Vertex_2[0] = s_faceid[1]->position().x();
+					tri.Vertex_2[1] = s_faceid[1]->position().y();
+					tri.Vertex_2[2] = s_faceid[1]->position().z();
+					tri._aabb.updateMinMax(tri.Vertex_2);
+
+					tri.Vertex_3[0] = s_faceid[2]->position().x();
+					tri.Vertex_3[1] = s_faceid[2]->position().y();
+					tri.Vertex_3[2] = s_faceid[2]->position().z();
+					tri._aabb.updateMinMax(tri.Vertex_3);
+
+					//tri._aabb.expandBoundary();
+					tri.setTriId(num);
+
+					Tria.push_back(tri);
+					++num;
+
 					InsertFace(s_faceid);
 				}
 			}
@@ -413,7 +446,118 @@ bool Mesh3D::LoadFromOBJFile(const char* fins)//读取obj文件
 
 
 		UpdateMesh();
-		Unify(2.f);
+		//Unify(2.f);
+
+
+		float x_box, y_box, z_box, min_box, max_box, len_z, len_x, len_y;
+		Vec3f max = getBoundingBox().at(0);
+		Vec3f min = getBoundingBox().at(1);
+
+		x_box = max.x() - min.x();
+		y_box = max.y() - min.y();
+		z_box = max.z() - min.z();
+
+		//if (mid_box == mif_box)
+		//{
+		//	len = z_box;
+		//}
+		//else
+		//{
+		//	len = y_box;
+		//}
+		//////////////////////////////////////分割密度
+		len_z = z_box / static_cast<float>(PARTTABLENUM);
+		len_x = x_box / static_cast<float>(PARTTABLENUM);
+		len_y = y_box / static_cast<float>(PARTTABLENUM);
+
+		for (int i = 0;i < Tria.size();i++)
+		{
+			min_box = min(Tria[i]._aabb._min.z(), Tria[i]._aabb._max.z());
+			max_box = max(Tria[i]._aabb._min.z(), Tria[i]._aabb._max.z());
+
+			if (i < 0)
+			{
+				qDebug() << "ModelMin:" << min.z() << "ModelMax:" << max.z();
+				qDebug() << "TriaMin:" << min_box << "TriaMax:" << max_box;
+				qDebug() << "min.z() + j*len_z:" << min.z() + i*len_z;
+			}
+
+
+			for (int j = 1;j <= PARTTABLENUM;j++)
+			{
+				//qDebug() << Tria[i]._aabb._min.z() + 0.01 << Tria[i]._aabb._max.z() + 0.01 << min.z() + j*len;
+				//partitionTable_Z[j - 1].push_back(Tria[i]);
+
+				if (min_box - 0.1 < (min.z() + j*len_z))
+				{
+					partitionTable_Z[j - 1].push_back(&Tria[i]);
+					if (max_box + 0.1 < (min.z() + j*len_z))
+					{
+						break;
+					}
+				}
+			}
+
+		}
+
+		qDebug() << "partitionTable_Z_Z :" << "parttable[0]" << partitionTable_Z[0].size() << "parttable[1]" << partitionTable_Z[1].size();
+
+		num = 0;
+		for (int n = 0;n < PARTTABLENUM;n++)
+		{
+			for (int i = 0;i < partitionTable_Z[n].size();i++)
+			{
+				for (int j = 0;j < partitionTable_Z[n].size();j++)
+				{
+					if (i == j)
+					{
+						continue;
+					}
+					if (judge_triangle_topologicalStructure(partitionTable_Z[n][i], partitionTable_Z[n][j]) == INTERSECT)
+					{
+						partitionTable_Z[n][i]->selected = 1;
+						partitionTable_Z[n][j]->selected = 1;
+						
+						partitionTable_Z[n][j]->INS.ID = partitionTable_Z[n][j]->getTriId();
+						partitionTable_Z[n][j]->INS.insEdgeStartPoint = insStartPoint;
+						partitionTable_Z[n][j]->INS.insEdgeEndPoint = insEndPoint;
+						partitionTable_Z[n][j]->INS.insPoint.x() = INSPOINT_X;
+						partitionTable_Z[n][j]->INS.insPoint.y() = INSPOINT_Y;
+						partitionTable_Z[n][j]->INS.insPoint.z() = INSPOINT_Z;
+
+						partitionTable_Z[n][i]->triVar.insert(partitionTable_Z[n][j]->INS);
+						//break;	INS = new InsFaceIdAndEdge();
+					}
+				}
+			}
+		}
+
+
+		for (int i = 0;i < Tria.size();i++)
+		{
+			if (Tria[i].selected == 1)
+			{
+				num++;
+			}
+			if (i < 20)
+			{
+				qDebug() << "Triangle ID:" << Tria[i].getTriId();
+				std::set<InsFaceIdAndEdge>::iterator it; //定义前向迭代器  
+											//中序遍历集合中的所有元素  
+				for (it = Tria[i].triVar.begin(); it != Tria[i].triVar.end(); it++)
+				{
+					qDebug() << it->ID << " ";
+					//->ID << " "<<it->insEdgeStartPoint<<"-"<<it->insEdgeEndPoint;
+				}
+
+			}
+		}
+
+		qDebug() << "w Tria=" << Tria.size() << "Num" << num << "\n";
+
+		num = Tria.size();
+
+
 	}
 	catch (...)
 	{
@@ -440,15 +584,19 @@ void Mesh3D::MntnMesh(const char* fouts) {
 	//fout << "g object\n";
 	//fout.precision(8);
 	fout << "solid 3" << "\n";
-	for (int i = 0; i < num; i++)
+	for (int i = 0; i < Tri.size(); i++)
 	{
+		//if (Tria[i].partitionNumber==1)
+		//{
+		//	continue;
+		//}
 	//	fout.setf(std::ios::showpoint);
 		//科学计数法
-		fout << "  facet normal " << std::fixed << std::setprecision(4)<< Tria[i].normal.x()<< "  "<< Tria[i].normal.y() << "  " << Tria[i].normal.z() << "\n";
+		fout << "  facet normal " << std::fixed << std::setprecision(4)<< Tri[i].normal.x()<< "  "<< Tri[i].normal.y() << "  " << Tri[i].normal.z() << "\n";
 		fout << "      outer loop" << "\n";
-		fout << "         vertex " << std::fixed << std::setprecision(4)<< Tria[i].Vertex_1.x() << "  " << Tria[i].Vertex_1.y() << "  " << Tria[i].Vertex_1.z() << "\n";
-		fout << "         vertex " << std::fixed << std::setprecision(4)<< Tria[i].Vertex_2.x() << "  " << Tria[i].Vertex_2.y() << "  " << Tria[i].Vertex_2.z() << "\n";
-		fout << "         vertex " << std::fixed << std::setprecision(4)<< Tria[i].Vertex_3.x() << "  " << Tria[i].Vertex_3.y() << "  " << Tria[i].Vertex_3.z() << "\n";
+		fout << "         vertex " << std::fixed << std::setprecision(4)<< Tri[i].Vertex_1.x() << "  " << Tri[i].Vertex_1.y() << "  " << Tri[i].Vertex_1.z() << "\n";
+		fout << "         vertex " << std::fixed << std::setprecision(4)<< Tri[i].Vertex_2.x() << "  " << Tri[i].Vertex_2.y() << "  " << Tri[i].Vertex_2.z() << "\n";
+		fout << "         vertex " << std::fixed << std::setprecision(4)<< Tri[i].Vertex_3.x() << "  " << Tri[i].Vertex_3.y() << "  " << Tri[i].Vertex_3.z() << "\n";
 		fout << "      endloop" << "\n";
 		fout << "  endfacet" << "\n";
 			
@@ -460,6 +608,7 @@ void Mesh3D::MntnMesh(const char* fouts) {
 void Mesh3D::WriteToOBJFile(const char* fouts)
 {
 	std::ofstream fout(fouts);
+
 
 	fout<<"g object\n";
 	fout.precision(8);
@@ -520,7 +669,7 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 	{
 		//qDebug() << "s" << file.readLine();
 		QTextStream inASCII(file.readAll());
-		ClearData();//为什么又执行了一次Clear操作
+		//ClearData();//为什么又执行了一次Clear操作
 		int NUm_vertex = 0, num_facet = 0;
 		std::vector<HE_vert* > s_faceid;
 		Vec3f normal;
@@ -542,8 +691,8 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 				NUm_vertex++;
 				HE_vert* hv;
 				Vec3f nvv; 
-				inASCII.setRealNumberNotation(QTextStream::FixedNotation);
-				inASCII.setRealNumberPrecision(4);
+				//inASCII.setRealNumberNotation(QTextStream::FixedNotation);
+				//inASCII.setRealNumberPrecision(4);
 
 				inASCII >> nvv[0] >> nvv[1] >> nvv[2];
 
@@ -595,81 +744,34 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 					tri.normal[1] = normal[1];
 					tri.normal[2] = normal[2];
 
+					tri._aabb.reset();
+
 					tri.Vertex_1[0] = s_faceid[0]->position().x();
 					tri.Vertex_1[1] = s_faceid[0]->position().y();
 					tri.Vertex_1[2] = s_faceid[0]->position().z();
+					tri._aabb.updateMinMax(tri.Vertex_1);
 
 					tri.Vertex_2[0] = s_faceid[1]->position().x();
 					tri.Vertex_2[1] = s_faceid[1]->position().y();
 					tri.Vertex_2[2] = s_faceid[1]->position().z();
+					tri._aabb.updateMinMax(tri.Vertex_2);
 
 					tri.Vertex_3[0] = s_faceid[2]->position().x();
 					tri.Vertex_3[1] = s_faceid[2]->position().y();
 					tri.Vertex_3[2] = s_faceid[2]->position().z();
-					//tri._aabb.updateMinMax(tri.Vertex, 3);
+					tri._aabb.updateMinMax(tri.Vertex_3);
+
+					//tri._aabb.expandBoundary();
+					tri.setTriId(num);
 
 					Tria.push_back(tri);
-
+					++num;
 					InsertFace(s_faceid)/*->normal_=normal*/;
 					num_facet++;
 				}
 				s_faceid.clear();
 			}
 		}
-
-		//for (int i=0;i<Tria.size();i++)
-		//{
-		//	for (int j=0;j<Tria.size();j++)
-		//	{
-		//		if (j==i)
-		//		{
-		//			continue;
-		//		}
-		//		if (Tria[i]._aabb.intersects(Tria[j]._aabb))
-		//		{
-		//			Tria[i].triVar.push_back(Tria[j]);
-		//		}
-		//	}
-		//}
-		//
-
-		num = 0;
-		for (int i = 0;i < Tria.size();i++)
-		{
-			for (int j=0;j < Tria.size();j++)
-			{
-				if (i==j)
-				{
-					continue;  
-				}
-				//两点重合的都不相交
-				//num++;
-				if (judge_triangle_topologicalStructure(&Tria[i], &Tria[j]) == INTERSECT)
-				{
-					Tria[i].selected = 1;
-					Tria[j].selected = 1;
-					//break;
-				}
-			}
-		}
-		for(int i = 0;i<Tria.size();i++)
-		{
-			if (Tria[i].selected==1)
-			{
-				num++;
-			}
-			//if (i<10)
-			//{
-			//	qDebug() << scientific << "1.." << Tria[i].Vertex_1.x() << "   " << Tria[i].Vertex_1.y() << "   " << Tria[i].Vertex_1.z();
-			//	qDebug() << scientific << "2.." << Tria[i].Vertex_2.x() << "   " << Tria[i].Vertex_2.y() << "   " << Tria[i].Vertex_2.z();
-			//	qDebug() << scientific << "3.." << Tria[i].Vertex_3.x() << "   " << Tria[i].Vertex_3.y() << "   " << Tria[i].Vertex_3.z();
-			//}
-		}
-
-		qDebug() << "w Tria=" << Tria.size() <<"Num"<<num<<"\n";
-		
-		num = Tria.size();
-
 	}
 
 	// read Binary .stl file
@@ -741,8 +843,227 @@ bool Mesh3D::LoadFromSTLFile(const char* fins)
 
 	file.close();
 	UpdateMesh();
-	Unify(2.f);
-	exportNeighborId();
+//	Unify(2.0f);
+	float x_box, y_box, z_box, min_box, max_box, len_z,len_x,len_y;
+	Vec3f max = getBoundingBox().at(0);
+	Vec3f min = getBoundingBox().at(1);
+
+	x_box = max.x() - min.x();
+	y_box = max.y() - min.y();
+	z_box = max.z() - min.z();
+
+	//if (mid_box == mif_box)
+	//{
+	//	len = z_box;
+	//}
+	//else
+	//{
+	//	len = y_box;
+	//}
+	//////////////////////////////////////分割密度
+	len_z = z_box / static_cast<float>(PARTTABLENUM);
+	len_x = x_box / static_cast<float>(PARTTABLENUM);
+	len_y = y_box / static_cast<float>(PARTTABLENUM);
+
+	for (int i = 0;i < Tria.size();i++)
+	{
+		min_box = min(Tria[i]._aabb._min.z(), Tria[i]._aabb._max.z());
+		max_box = max(Tria[i]._aabb._min.z(), Tria[i]._aabb._max.z());
+
+		if (i<0)
+		{
+			qDebug() << "ModelMin:" << min.z() << "ModelMax:" << max.z();
+			qDebug() << "TriaMin:" << min_box << "TriaMax:" << max_box;
+			qDebug() << "min.z() + j*len_z:" << min.z() + i*len_z;
+		}
+		
+
+		for (int j = 1;j <= PARTTABLENUM;j++) 
+		{
+			//qDebug() << Tria[i]._aabb._min.z() + 0.01 << Tria[i]._aabb._max.z() + 0.01 << min.z() + j*len;
+			//partitionTable_Z[j - 1].push_back(Tria[i]);
+
+				if (min_box - 0.1 <(min.z() + j*len_z))
+				{
+					partitionTable_Z[j - 1].push_back(&Tria[i]);
+					if (max_box + 0.1 < (min.z() + j*len_z))
+					{
+						break;
+					}
+				}
+		}
+
+	}
+
+	qDebug() << "partitionTable_Z_Z :"  << "parttable[0]" << partitionTable_Z[0].size() << "parttable[1]" << partitionTable_Z[1].size();
+
+	num = 0;
+	for (int n=0;n<PARTTABLENUM;n++)
+	{
+		for (int i = 0;i < partitionTable_Z[n].size();i++)
+		{	
+			for (int j = 0;j < partitionTable_Z[n].size();j++)
+			{
+				if (i == j)
+				{
+					continue;
+				}
+				if (judge_triangle_topologicalStructure(partitionTable_Z[n][i], partitionTable_Z[n][j]) == INTERSECT)
+				{
+					partitionTable_Z[n][i]->selected = 1;
+					partitionTable_Z[n][j]->selected = 1;
+
+					partitionTable_Z[n][j]->INS.ID = partitionTable_Z[n][j]->getTriId();
+					partitionTable_Z[n][j]->INS.insEdgeStartPoint = insStartPoint;
+					partitionTable_Z[n][j]->INS.insEdgeEndPoint = insEndPoint;
+					partitionTable_Z[n][j]->INS.insRedundantPoint = insRedunPoint;
+					partitionTable_Z[n][j]->INS.insPoint.x() = INSPOINT_X;
+					partitionTable_Z[n][j]->INS.insPoint.y() = INSPOINT_Y;
+					partitionTable_Z[n][j]->INS.insPoint.z() = INSPOINT_Z;
+					 
+					partitionTable_Z[n][i]->triPoint.insert(partitionTable_Z[n][j]->INS.insPoint);//记录此面所有的交点
+					partitionTable_Z[n][i]->triVar.insert(partitionTable_Z[n][j]->INS);
+					//break;
+				}
+			}
+		}
+	}
+
+	num = Tria.size();
+	for (int i = 0;i < num;i++)
+	{
+		//if (Tria[i].selected == 1)
+		//{
+		//	num++;
+		//}
+		if (i>0)
+		{
+			qDebug() << "Triangle ID:" << Tria[i].getTriId();
+
+			if (Tria[i].triVar.size()==0)
+			{
+				continue;
+			}
+			std::set<InsFaceIdAndEdge>::iterator it; //定义前向迭代器  
+													 //中序遍历集合中的所有元素  
+			std::set<InsFaceIdAndEdge>::iterator it_var;
+
+			int TriNum = 0;
+
+			for (it = Tria[i].triVar.begin(); it != Tria[i].triVar.end(); it++)
+			{
+				qDebug() << it->ID << " " << it->insEdgeStartPoint << "-" << it->insEdgeEndPoint << "(" << it->insPoint.x() << "," << it->insPoint.y() << "," << it->insPoint.z() << ")";
+				if (it->insEdgeStartPoint == 0) //排除不是两边相交的点
+				{
+					continue;
+				}
+				for (it_var=Tria[it->ID].triVar.begin();it_var!=Tria[i].triVar.end();it_var++)
+				{
+					if (it_var->ID!=i)
+					{
+						continue;
+					}
+					Triangle tri;
+					////左上角 小三角面片
+					//tri.setTriId(Tria.size());
+					//tri.Vertex_1 = Tria[it_var->ID].mappingValue(it_var->insEdgeStartPoint);
+					//tri.Vertex_2 = Tria[it->ID].mappingValue(it->insEdgeStartPoint);
+					//tri.Vertex_3 = it_var->insPoint;
+					//Tria.push_back(tri);
+
+					////右下角 小三角面片
+					//tri.setTriId(Tria.size());
+					//tri.Vertex_1 = Tria[it_var->ID].mappingValue(it_var->insEdgeEndPoint);
+					//tri.Vertex_2 = Tria[it->ID].mappingValue(it->insEdgeEndPoint);
+					//tri.Vertex_3 = it_var->insPoint;
+					//Tria.push_back(tri);
+
+					//自身三角面片分割
+					tri.setTriId(TriNum++);
+					tri.Vertex_1 = Tria[it->ID].mappingValue(it->insEdgeStartPoint);
+					tri.Vertex_2 = Tria[it->ID].mappingValue(it->insRedundantPoint);
+					tri.Vertex_3 = it_var->insPoint;
+					Tri.push_back(tri);
+
+					tri.setTriId(TriNum++);
+					tri.Vertex_1 = Tria[it->ID].mappingValue(it->insEdgeEndPoint);
+					tri.Vertex_2 = Tria[it->ID].mappingValue(it->insRedundantPoint);
+					tri.Vertex_3 = it_var->insPoint;
+					Tri.push_back(tri);
+
+					//上面的小三角面片分割
+					tri.setTriId(TriNum++);
+					tri.Vertex_1 = Tria[it_var->ID].mappingValue(it_var->insEdgeStartPoint);
+					tri.Vertex_2 = Tria[it_var->ID].mappingValue(it_var->insRedundantPoint);
+					tri.Vertex_3 = it_var->insPoint;
+					Tri.push_back(tri);
+
+					tri.setTriId(TriNum);
+					tri.Vertex_1 = Tria[it_var->ID].mappingValue(it_var->insEdgeEndPoint);
+					tri.Vertex_2 = Tria[it_var->ID].mappingValue(it_var->insRedundantPoint);
+					tri.Vertex_3 = it_var->insPoint;
+					Tri.push_back(tri);
+					break;
+				}
+				//Triangle tri;
+				//tri.setTriId(Tria.size());
+				//tri.Vertex_1 = Tria[it->ID].mappingValue(it->insEdgeStartPoint);
+				//tri.Vertex_2 = Tria[it->ID].mappingValue(it->insEdgeEndPoint);
+				//tri.Vertex_3 = it->insPoint;
+				//Tria.push_back(tri);
+			}
+			for (int j=0;j<Tria.size();j++)
+			{
+				if (!Tria[j].triVar.empty())
+				{
+					Tria[j].partitionNumber = 1;
+				}
+			}
+
+		}
+	}
+
+	qDebug() << "w Tria=" << Tria.size() << "Num" << num << "\n";
+
+
+	//num = 0;
+	//for (int i = 0;i < Tria.size();i++)
+	//{
+	//	for (int j = 0;j < Tria.size();j++)
+	//	{
+	//		if (i == j)
+	//		{
+	//			continue;
+	//		}
+	//		//两点重合的都不相交
+	//		//num++;
+	//		if (judge_triangle_topologicalStructure(&Tria[i], &Tria[j]) == INTERSECT)
+	//		{
+	//			Tria[i].selected = 1;
+	//			Tria[j].selected = 1;
+	//			//break;
+	//		}
+
+	//	}
+	//}
+	//for (int i = 0;i<Tria.size();i++)
+	//{
+	//	if (Tria[i].selected == 1)
+	//	{
+	//		num++;
+	//	}
+	//	//if (i<10)
+	//	//{
+	//	//	qDebug() << scientific << "1.." << Tria[i].Vertex_1.x() << "   " << Tria[i].Vertex_1.y() << "   " << Tria[i].Vertex_1.z();
+	//	//	qDebug() << scientific << "2.." << Tria[i].Vertex_2.x() << "   " << Tria[i].Vertex_2.y() << "   " << Tria[i].Vertex_2.z();
+	//	//	qDebug() << scientific << "3.." << Tria[i].Vertex_3.x() << "   " << Tria[i].Vertex_3.y() << "   " << Tria[i].Vertex_3.z();
+	//	//}
+	//}
+
+	//qDebug() << "w Tria=" << Tria.size() << "Num" << num << "\n";
+
+	num = Tria.size();
+
 
 	//qDebug() << pvertices_list_->size();
 
@@ -759,7 +1080,7 @@ void Mesh3D::UpdateMesh(void)
 	ComputeAvarageEdgeLength();
 	if (input_vertex_list_.size() == 0)
 		SetNeighbors();
-	//Unify(1);
+	//Unify(1.5);
 }
 
 void Mesh3D::SetBoundaryFlag(void)
@@ -996,11 +1317,11 @@ void Mesh3D::Unify(float size)
 	{
 		scaleMax = scaleZ;
 	}
-// 	scaleV = size / scaleMax;
-// 	scaleT = scaleV;
-// 	scaleV = 1;
-	Vec3f centerPos((xmin_ +xmax_)/2.0, (ymin_+ymax_)/2.0, (zmin_));
-	//Vec3f centerPos(xmin_ , ymin_, zmin_);
+ 	//scaleV = size / scaleMax;
+ 	//scaleT = scaleV;
+ 	//scaleV = 1;
+	//Vec3f centerPos((xmin_ +xmax_)/2.0, (ymin_+ymax_)/2.0, (zmin_));
+	Vec3f centerPos((xmin_ + xmax_) / 2.0, (ymin_ + ymax_) / 2.0, (zmin_+zmax_)/2.0);
 	for (size_t i = 0; i != pvertices_list_->size(); i++)
 	{
 		pvertices_list_->at(i)->position_ = (pvertices_list_->at(i)->position_ - centerPos)*scaleT;

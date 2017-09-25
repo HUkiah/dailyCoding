@@ -6,6 +6,7 @@
 #include <QEvent>
 #include "HE_mesh/Vec.h"
 #include "HE_mesh/Mesh3D.h"
+#include "MsOctree.h"
 //#include "Support.h"
 
 
@@ -52,6 +53,7 @@ private:
 	void SetLight();
 
 public slots:
+	void ResetView();
 	void RecvMsg();
 	void ApplyMaintenance();
 	void SetBackground();
@@ -72,7 +74,6 @@ private:
 	void DrawTexture(bool);
 	void DrawGrid(bool bV);
 
-	void FindRegion();
 
 public:
 	MainWindow					*ptr_mainwindow_;
@@ -80,9 +81,10 @@ public:
 	CArcBall					*ptr_arcball_module_;
 	Mesh3D						*ptr_mesh_;
 
-	//Support						*ptr_support_;//line or point support in rederingwidget.cpp readMesh function.
+	MeshOctree						*ptr_octree_;//line or point support in rederingwidget.cpp readMesh function.
+
 	std::vector<bool>			faceNeedSupport;
-											  
+											   
 	// Texture
 	GLuint						texture_[1];
 	bool						is_load_texture_;

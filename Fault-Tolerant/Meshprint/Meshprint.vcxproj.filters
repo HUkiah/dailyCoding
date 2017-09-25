@@ -25,29 +25,17 @@
     <ClCompile Include="GeneratedFiles\Debug\moc_meshprint.cpp">
       <Filter>Generated Files\Debug</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_renderingwidget.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_meshprint.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_renderingwidget.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="maintenance.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_maintenance.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_maintenance.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="Cubes.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="MSAABB.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MsOctree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_renderingwidget.cpp">
+      <Filter>Generated Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -55,9 +43,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="globalFunctions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="matrix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="HE_mesh\Mesh3D.h">
@@ -78,13 +63,10 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_maintenance.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Cubes.h">
+    <ClInclude Include="MSAABB.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MSAABB.h">
+    <ClInclude Include="MsOctree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -97,15 +79,6 @@
     </CustomBuild>
     <CustomBuild Include="meshprint.ui">
       <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="maintenance.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="maintenance.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="GeneratedFiles\Release\maintenance.moc">
-      <Filter>Generated Files\Release</Filter>
     </CustomBuild>
     <CustomBuild Include="meshprint.qrc" />
   </ItemGroup>

@@ -31,7 +31,14 @@ extern float scaleT;
 extern int sss;
 extern int fildID;
 
-extern int num;
+extern int num;		//零碎的一些记录
+extern int insStartPoint;	//相交边的start端点
+extern int insEndPoint;	//相交边的End端点
+extern int insRedunPoint;//相交边的冗余点
+
+extern float INSPOINT_X;				//做全局变量来用，存储边相交的交点X坐标
+extern float INSPOINT_Y;				//做全局变量来用，存储边相交的交点Y坐标
+extern float INSPOINT_Z;				//做全局变量来用，存储边相交的交点Z坐标
 
 extern bool updateFlag;
 

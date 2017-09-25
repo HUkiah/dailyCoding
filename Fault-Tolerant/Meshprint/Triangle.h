@@ -6,6 +6,16 @@
 #include <QDebug>
 #include "MSAABB.h"
 
+/*
+检测两个三角面的相交时思路如下：
+考虑两个三角面的关系是以它们各自所处的平面为依托，
+1.首先一个三角面在另一个三角面所在平面的一侧，这时两个三角面一定不相交，
+实现上，用一个三角面上的一顶点分别以另一个三角面的三顶点组合的四点，判断四顶点的位置关系
+2.三角面上的一顶点在另一个三角面所在的平面上，进行点是否在三角形内的判断
+3.三角面上一点与其它两顶点分别位于另一个三角面所处平面的两侧（包含两顶点在平面上的情况）
+实现上求线段与面的交点是否在三角面内
+*/
+
 
 typedef trimesh::vec3  Vec3f;
 
@@ -18,20 +28,73 @@ enum pointInTriangleStatus
 	INTHEFACE, ONTHETOP, NOINTHETRIANGLE
 };
 
+struct InsFaceIdAndEdge
+{
+	int ID = -1;				//记录相交面的ID
+	int insEdgeStartPoint = 0;	//相交边的start端点
+	int insEdgeEndPoint = 0;	//相交边的End端点
+	int insRedundantPoint = 0;  //剩余的端点
+	Vec3f insPoint;				//相交点
+	bool operator < (const InsFaceIdAndEdge &a) const // 重载“<”操作符，自定义排序规则  
+	{
+		//按ID由大到小排序。如果要由小到大排序，使用“>”即可。  
+		return a.ID > ID;
+	}
+};
+
 class Triangle
 {
+private:
+	int triId;					//按照读取顺序，给三角面分配的ID号
+
 public:
 	Vec3f normal;
 	Vec3f Vertex_1, Vertex_2, Vertex_3;
 	AABB _aabb;					//AABB包围盒
+	InsFaceIdAndEdge INS;
 
-	Vec3f centerpoint;			//三角面的外点
-	double radius;				//三角面的外接圆半径
+	Vec3f centerpoint;			//三角面的外点 -
+	double radius;				//三角面的外接圆半径 -
 	int selected = 0;			//标记三角面片是否相交的标志位
-	std::vector<Triangle> triVar;
+	int partitionNumber = 0;	//分区编号，记录三家门面处在哪个区 -
+	std::set<InsFaceIdAndEdge> triVar;		//记录与其相交的三角面ID号
+	std::set<Vec3f> triPoint;	//记录三角面自身所有的交点
+
+	//std::vector<int> insEdgePoint; //相交边的一个端点
+
+
 public:
+	int getTriId() {
+		return triId;
+	}
+	void setTriId(int num) {
+		triId = num;
+	}
 	AABB getAABB() {
 		return _aabb;
+	}
+
+	Vec3f mappingValue(int value) {
+		if (value == 1)
+		{
+			return Vertex_1;
+		}
+		else if (value == 2)
+		{
+			return Vertex_2;
+		}
+		else if (value == 3)
+		{
+			return Vertex_3;
+		}
+	}
+
+	inline bool operator==(Triangle &v)
+	{
+		if (this->Vertex_1 == v.Vertex_1&&this->Vertex_2 == v.Vertex_2&&this->Vertex_3 == v.Vertex_3)
+			return true;
+		else
+			return false;
 	}
 };
 
@@ -40,6 +103,31 @@ struct pointTri
 	double x = 0, y = 0;
 };
 
+//inline void expandBoundary() {
+//
+//#define MAX_FLOAT_VALUE (static_cast<float>(10e10))
+//#define MIN_FLOAT_VALUE	(static_cast<float>(-10e10))
+//
+//	_max.x() = _max.y() = _max.z() = MIN_FLOAT_VALUE;
+//	_min.x() = _min.y() = _min.z() = MAX_FLOAT_VALUE;
+//
+//	_min.x() = std::min(_min.x(), (*viter)->position_.x());
+//	_min.y() = min(_min.y(), (*viter)->position_.y());
+//	_min.z() = min(_min.z(), (*viter)->position_.z());
+//	_max.x() = max(_max.x(), (*viter)->position_.x());
+//	_max.y() = max(_max.y(), (*viter)->position_.y());
+//	_max.z() = max(_max.z(), (*viter)->position_.z());
+//
+//
+//	//扩大包围盒外檐，不至于只是一个面
+//	_min.x() = _min.x() - 0.01;
+//	_min.y() = _min.y() - 0.01;
+//	_min.z() = _min.z() - 0.01;
+//
+//	_max.x() = _max.x() + 0.01;
+//	_max.y() = _max.y() + 0.01;
+//	_max.z() = _max.z() + 0.01;
+//}
 
 inline void copy_pointXY(pointTri &a, Vec3f b) {
 	a.x = b[0];
@@ -323,7 +411,13 @@ inline bool is_pointTri_within_triangle(Triangle* tri, Vec3f pointTri)
 	return false;
 
 }
-
+inline bool is_pointTri_within_Line(Vec3f f1,Vec3f f2,Vec3f point) {
+		if (((f1.x() - point.x())*(point.x() - f2.x()))>=0&& ((f1.y() - point.y())*(point.y() - f2.y())) >= 0&& ((f1.z() - point.z())*(point.z() - f2.z())) >= 0)
+		{
+			return true;
+		}
+		return false;
+}
 
 //判断点是否是三角形的一个顶点
 inline bool is_pointTri_within_triangle_vectex(Triangle *tri, Vec3f pointTri) {
@@ -576,6 +670,7 @@ inline bool triangle_intersert_inSamePlane(Triangle* tri1, Triangle* tri2)
 
 inline bool Cal_Plane_Line_IntersectPoint(Triangle *tri,Vec3f f1,Vec3f f2,Vec3f& point)
 {
+
 	float p1_f1 = get_vector4_det(tri->Vertex_1, tri->Vertex_2, tri->Vertex_3, f1);
 
 	float p1_f2 = get_vector4_det(tri->Vertex_1, tri->Vertex_2, tri->Vertex_3, f2);
@@ -640,12 +735,30 @@ inline bool Cal_Plane_Line_IntersectPoint(Triangle *tri,Vec3f f1,Vec3f f2,Vec3f&
 
 inline bool is_TriangleIntersect_within_NoSamePlane(Triangle *tri1,Triangle *tri2) {
 	
+	insStartPoint = 0;	//相交边的start端点，用做记录
+	insEndPoint = 0;	//相交边的End端点
+	insRedunPoint = 0;	//相交边的冗余点
+
+	INSPOINT_X = 0;
+	INSPOINT_Y = 0;
+	INSPOINT_Z = 0;
+
 	Vec3f point;
 	if (Cal_Plane_Line_IntersectPoint(tri1, tri2->Vertex_1, tri2->Vertex_2, point)&&is_pointTri_within_triangle(tri1,point))
 	{
 		if (is_pointTri_within_triangle_vectex(tri1, point))
 		{
 			return false;
+		}
+		//判断点是否在线段上，是我应该做出标记
+		if (is_pointTri_within_Line(tri2->Vertex_1, tri2->Vertex_2, point))
+		{
+			insStartPoint = 1;
+			insEndPoint = 2;
+			insRedunPoint = 3; 
+			INSPOINT_X = point.x();
+			INSPOINT_Y = point.y();
+			INSPOINT_Z = point.z();
 		}
 		return true;
 	}
@@ -656,20 +769,40 @@ inline bool is_TriangleIntersect_within_NoSamePlane(Triangle *tri1,Triangle *tri
 		{
 			return false;
 		}
+		if (is_pointTri_within_Line(tri2->Vertex_1, tri2->Vertex_3, point))
+		{
+			insStartPoint = 1;
+			insEndPoint = 3;
+			insRedunPoint = 2;
+			INSPOINT_X = point.x();
+			INSPOINT_Y = point.y();
+			INSPOINT_Z = point.z();
+		}
 		return true;
 	}
 	
 	if (Cal_Plane_Line_IntersectPoint(tri1, tri2->Vertex_2, tri2->Vertex_3, point)&&is_pointTri_within_triangle(tri1, point))
 	{
+
 		if (is_pointTri_within_triangle_vectex(tri1, point))
 		{
 			return false;
+		}
+		if (is_pointTri_within_Line(tri2->Vertex_2, tri2->Vertex_3, point))
+		{
+			insStartPoint = 2;
+			insEndPoint = 3;
+			insRedunPoint = 1;
+			INSPOINT_X = point.x();
+			INSPOINT_Y = point.y();
+			INSPOINT_Z = point.z();
 		}
 		return true;
 	}
 	
 	if (Cal_Plane_Line_IntersectPoint(tri2, tri1->Vertex_1, tri1->Vertex_2, point)&&is_pointTri_within_triangle(tri2, point))
 	{
+		qDebug() << ".........";
 		if (is_pointTri_within_triangle_vectex(tri2, point))
 		{
 			return false;

@@ -6,6 +6,8 @@
 #include <set>
 #include "Triangle.h"
 
+#define PARTTABLENUM 32
+
 // forward declarations of mesh classes
 class HE_vert;
 class HE_edge;
@@ -267,9 +269,12 @@ private:
 public:
 	//! associate two end vertex with its edge: only useful in creating mesh
 	std::map<std::pair<HE_vert*, HE_vert* >, HE_edge* >    edgemap_;
-
+	
 	std::vector<Triangle> Tria; //用来判断三角面的位置关系
-
+	std::vector<Triangle> Tri; //用来判断三角面的位置关系
+//	std::vector<Triangle *> partitionTable[PARTTABLENUM]; //分区检测某一坐标轴
+	std::vector<Triangle *> partitionTable_Z[PARTTABLENUM]; //分区检测Z轴
+//	std::vector<Triangle *> partitionTable_Y[PARTTABLENUM]; //分区检测Y轴
 	//! constructor
 	Mesh3D(void);
 
