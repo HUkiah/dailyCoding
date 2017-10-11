@@ -1,28 +1,28 @@
 #ifndef MYDIALOG_H  
 #define MYDIALOG_H 
 
-#include "globalFunctions.h"
 #include <QDialog>  
+namespace Ui {
+	class MyDialog;
+}
 
-
-namespace Ui {  
-class MyDialog;  
-}  
 class MyDialog : public QDialog  
 {  
     Q_OBJECT  
-      
-public:  
-    explicit MyDialog(QWidget *parent = 0);  
-    ~MyDialog();  
+public:
+	explicit MyDialog(QWidget *parent = 0);
+	~MyDialog();
+
 signals:
-	void SendMsg();
+	void SendMsg(QString);
+	//void sendUpdate();
+public slots:	
+	void on_updateButton_clicked();
+	void DialogClose();
 
-private slots:  
-    void on_pushButton_clicked();
-	void off_pushButton_clicked();
 
-private:  
-    Ui::MyDialog *ui;  
+public:
+	Ui::MyDialog *ui;
+
 };  
 #endif // MYDIALOG_H  

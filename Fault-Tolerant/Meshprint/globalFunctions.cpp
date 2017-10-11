@@ -26,7 +26,7 @@ float scaleT = 1.0;
 int sss = 0;
 int fildID = 0;
 
-bool updateFlag = false;
+
 int num = 0;		//充当计数的变量，还充当给三角面ID 赋值 在读取它们(面片)的时候
 int insStartPoint=0;	//相交边的start端点
 int insEndPoint=0;		//相交边的End端点
@@ -35,3 +35,5 @@ int insRedunPoint = 0;	//相交边的冗余点
 float INSPOINT_X;				//做全局变量来用，存储边相交的交点X坐标
 float INSPOINT_Y;				//做全局变量来用，存储边相交的交点Y坐标
 float INSPOINT_Z;				//做全局变量来用，存储边相交的交点Z坐标
+
+bool actionMaintenanceFlag = true;

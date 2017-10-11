@@ -1071,8 +1071,8 @@ public:
         QObject::connect(checkBox_3, SIGNAL(toggled(bool)), openGLWidget, SLOT(SetAllHatch(bool)));
         QObject::connect(spinBox, SIGNAL(valueChanged(int)), openGLWidget, SLOT(SetSliceCheckIdText(int)));
         QObject::connect(doubleSpinBox_24, SIGNAL(valueChanged(double)), openGLWidget, SLOT(setThickness(double)));
-        QObject::connect(actionMaintenance, SIGNAL(triggered()), openGLWidget, SLOT(WriteMesh()));
-        QObject::connect(actionIsometric_View, SIGNAL(triggered()), openGLWidget, SLOT(ReadMesh()));
+        QObject::connect(actionMaintenance, SIGNAL(triggered()), openGLWidget, SLOT(ApplyMaintenance()));
+        QObject::connect(actionIsometric_View, SIGNAL(triggered()), openGLWidget, SLOT(ResetView()));
 
         tabWidget->setCurrentIndex(0);
         comboBox_2->setCurrentIndex(0);

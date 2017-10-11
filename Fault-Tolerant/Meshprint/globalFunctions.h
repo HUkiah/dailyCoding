@@ -40,7 +40,7 @@ extern float INSPOINT_X;				//做全局变量来用，存储边相交的交点X坐标
 extern float INSPOINT_Y;				//做全局变量来用，存储边相交的交点Y坐标
 extern float INSPOINT_Z;				//做全局变量来用，存储边相交的交点Z坐标
 
-extern bool updateFlag;
+extern bool actionMaintenanceFlag;
 
 template<class object>
 void SafeDelete(object *ptr)

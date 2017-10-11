@@ -30,7 +30,7 @@ enum pointInTriangleStatus
 
 struct InsFaceIdAndEdge
 {
-	int ID = -1;				//记录相交面的ID
+//	int ID = -1;				//记录相交面的ID
 	int insEdgeStartPoint = 0;	//相交边的start端点
 	int insEdgeEndPoint = 0;	//相交边的End端点
 	int insRedundantPoint = 0;  //剩余的端点
@@ -38,7 +38,7 @@ struct InsFaceIdAndEdge
 	bool operator < (const InsFaceIdAndEdge &a) const // 重载“<”操作符，自定义排序规则  
 	{
 		//按ID由大到小排序。如果要由小到大排序，使用“>”即可。  
-		return a.ID > ID;
+		return a.insPoint > insPoint;
 	}
 };
 
@@ -57,8 +57,8 @@ public:
 	double radius;				//三角面的外接圆半径 -
 	int selected = 0;			//标记三角面片是否相交的标志位
 	int partitionNumber = 0;	//分区编号，记录三家门面处在哪个区 -
-	std::set<InsFaceIdAndEdge> triVar;		//记录与其相交的三角面ID号
-	std::set<Vec3f> triPoint;	//记录三角面自身所有的交点
+	std::vector<Triangle> triVar;		//记录与其相交的三角面ID号
+	std::set<InsFaceIdAndEdge> triPoint;	//记录三角面自身所有的交点
 
 	//std::vector<int> insEdgePoint; //相交边的一个端点
 
@@ -378,9 +378,9 @@ inline bool PointinTriangle1(Triangle *tri, Vec3f P)
 
 inline bool is_pointTri_within_triangle(Triangle* tri, Vec3f pointTri)
 {
-	return SameSide(tri->Vertex_1, tri->Vertex_2, tri->Vertex_3, pointTri) &&
-		SameSide(tri->Vertex_2, tri->Vertex_3, tri->Vertex_1, pointTri) &&
-		SameSide(tri->Vertex_3, tri->Vertex_1, tri->Vertex_2, pointTri);
+	//return SameSide(tri->Vertex_1, tri->Vertex_2, tri->Vertex_3, pointTri) &&
+	//	SameSide(tri->Vertex_2, tri->Vertex_3, tri->Vertex_1, pointTri) &&
+	//	SameSide(tri->Vertex_3, tri->Vertex_1, tri->Vertex_2, pointTri);
 
 	Vec3f v0;
 	get_vector_diff(v0, tri->Vertex_1, tri->Vertex_3);
@@ -744,6 +744,67 @@ inline bool is_TriangleIntersect_within_NoSamePlane(Triangle *tri1,Triangle *tri
 	INSPOINT_Z = 0;
 
 	Vec3f point;
+
+	if (Cal_Plane_Line_IntersectPoint(tri2, tri1->Vertex_1, tri1->Vertex_2, point) && is_pointTri_within_triangle(tri2, point))
+	{
+		qDebug() << ".........";
+		if (is_pointTri_within_triangle_vectex(tri2, point))
+		{
+			return false;
+		}
+		//判断点是否在线段上，是我应该做出标记
+		if (is_pointTri_within_Line(tri1->Vertex_1, tri1->Vertex_2, point))
+		{
+			insStartPoint = 1;
+			insEndPoint = 2;
+			insRedunPoint = 3;
+			INSPOINT_X = point.x();
+			INSPOINT_Y = point.y();
+			INSPOINT_Z = point.z();
+		}
+		return true;
+	}
+
+	if (Cal_Plane_Line_IntersectPoint(tri2, tri1->Vertex_1, tri1->Vertex_3, point) && is_pointTri_within_triangle(tri2, point))
+	{
+		qDebug() << "++++++++++++++++";
+		if (is_pointTri_within_triangle_vectex(tri2, point))
+		{
+			return false;
+		}
+		//判断点是否在线段上，是我应该做出标记
+		if (is_pointTri_within_Line(tri1->Vertex_1, tri1->Vertex_3, point))
+		{
+			insStartPoint = 1;
+			insEndPoint = 3;
+			insRedunPoint = 2;
+			INSPOINT_X = point.x();
+			INSPOINT_Y = point.y();
+			INSPOINT_Z = point.z();
+		}
+		return true;
+	}
+
+	if (Cal_Plane_Line_IntersectPoint(tri2, tri1->Vertex_2, tri1->Vertex_3, point) && is_pointTri_within_triangle(tri2, point))
+	{
+		qDebug() << "-----------------";
+		if (is_pointTri_within_triangle_vectex(tri2, point))
+		{
+			return false;
+		}
+		//判断点是否在线段上，是我应该做出标记
+		if (is_pointTri_within_Line(tri1->Vertex_2, tri1->Vertex_3, point))
+		{
+			insStartPoint = 2;
+			insEndPoint = 3;
+			insRedunPoint = 1;
+			INSPOINT_X = point.x();
+			INSPOINT_Y = point.y();
+			INSPOINT_Z = point.z();
+		}
+		return true;
+	}
+
 	if (Cal_Plane_Line_IntersectPoint(tri1, tri2->Vertex_1, tri2->Vertex_2, point)&&is_pointTri_within_triangle(tri1,point))
 	{
 		if (is_pointTri_within_triangle_vectex(tri1, point))
@@ -800,33 +861,8 @@ inline bool is_TriangleIntersect_within_NoSamePlane(Triangle *tri1,Triangle *tri
 		return true;
 	}
 	
-	if (Cal_Plane_Line_IntersectPoint(tri2, tri1->Vertex_1, tri1->Vertex_2, point)&&is_pointTri_within_triangle(tri2, point))
-	{
-		qDebug() << ".........";
-		if (is_pointTri_within_triangle_vectex(tri2, point))
-		{
-			return false;
-		}
-		return true;
-	}
 	
-	if (Cal_Plane_Line_IntersectPoint(tri2, tri1->Vertex_1, tri1->Vertex_3, point)&&is_pointTri_within_triangle(tri2, point))
-	{
-		if (is_pointTri_within_triangle_vectex(tri2, point))
-		{
-			return false;
-		}
-		return true;
-	}
-
-	if (Cal_Plane_Line_IntersectPoint(tri2, tri1->Vertex_2, tri1->Vertex_3, point)&&is_pointTri_within_triangle(tri2, point))
-	{
-		if (is_pointTri_within_triangle_vectex(tri2, point))
-		{
-			return false;
-		}
-		return true;
-	}
+	qDebug() << "0000000000";
 	return false;
 }
 

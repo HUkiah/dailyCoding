@@ -375,7 +375,10 @@ public:
 	//! export the current mesh to an OBJ format file
 	void WriteToOBJFile(const char* fouts);
 
+	//保存修改完成后的mesh
 	void MntnMesh(const char* fouts);
+	//检测三角面是否相交
+	void TriangleIntersect();
 
 	bool LoadFromSTLFile(const char * fins);
 

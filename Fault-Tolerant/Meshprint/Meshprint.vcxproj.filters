@@ -37,6 +37,15 @@
     <ClCompile Include="GeneratedFiles\Debug\moc_renderingwidget.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
+    <ClCompile Include="maintenance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_maintenance.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_maintenance.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArcBall.h">
@@ -69,6 +78,9 @@
     <ClInclude Include="MsOctree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_maintenance.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="meshprint.h">
@@ -81,6 +93,12 @@
       <Filter>Form Files</Filter>
     </CustomBuild>
     <CustomBuild Include="meshprint.qrc" />
+    <CustomBuild Include="maintenance.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="maintenance.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">

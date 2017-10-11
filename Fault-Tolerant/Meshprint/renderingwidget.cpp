@@ -312,23 +312,23 @@ void RenderingWidget::SetBackground()
 //Reset Model View
 void RenderingWidget::ResetView() {
 
-	ptr_arcball_->reSetBound(width(), height());
-	ptr_arcball_module_->reSetBound(width(), height());
+	ptr_arcball_->InitBall();
 
 	update();
 }
 
 //Menterance button
-void RenderingWidget::RecvMsg() {
+void RenderingWidget::RecvMsg(QString str) {
 
-	if (updateFlag)
+	if (str=="update")
 	{
-		updateFlag = false;
+		//执行检测方法
+		//发送信号，更新Dialog
 	}
-	else
-	{
-		updateFlag = true;
-	}
+	//else
+	//{
+	//	updateFlag = true;
+	//}
 	int n = 0;
 	for (int i = 0;i < ptr_mesh_->Tria.size();i++)
 	{
@@ -342,13 +342,21 @@ void RenderingWidget::RecvMsg() {
 	update();
 }
 
+
 void RenderingWidget::ApplyMaintenance() {
 	qDebug() << "Maintenance!!!" << "\n";
-	//MyDialog *dialog = new MyDialog;
-	//dialog->setAttribute(Qt::WA_DeleteOnClose);
-	//dialog->setWindowTitle(tr("Maintenance Dialog"));
-	//dialog->show();
-	//qDebug() << dialog->result();
+	if (actionMaintenanceFlag)
+	{
+		actionMaintenanceFlag = false;
+
+		MyDialog *dialog = new MyDialog(this);//当用WA_DeleteOnClose时，会不会存在二次析构的问题呢，不会，对象析构时，会在父对象的children table delete.父对象销毁时children也销毁，否则nodestory
+		dialog->setAttribute(Qt::WA_DeleteOnClose);//在Dialog关闭时，进行析构，防止内存泄漏
+		dialog->setWindowTitle(tr("Maintenance Dialog"));
+		dialog->show();
+		qDebug() << "over!!!" << dialog->result();
+	}
+
+	
 }
 
 void RenderingWidget::ReadMesh()
@@ -423,7 +431,7 @@ void RenderingWidget::ReadMesh()
 	//BuildSmartGrid();
 
 	//ptr_arcball_->PlaceBall(scaleV);
-	scaleT = scaleV;
+	//scaleT = scaleV;
 	eye_distance_ = 2 * max_;
 }
 
@@ -610,18 +618,18 @@ void RenderingWidget::DrawEdge(bool bv)
 	//	}
 	//	glEnd();
 	//}
-	for (size_t i = 0; i != ptr_mesh_->Tria.size(); ++i)
+	for (size_t i = 0; i != ptr_mesh_->Tri.size(); ++i)
 	{
 		glBegin(GL_LINES);
 		glColor3f(0.0, 0.0, 0.0);
-		glVertex3fv((ptr_mesh_->Tria[i].Vertex_1*scaleV).data());
-		glVertex3fv((ptr_mesh_->Tria[i].Vertex_2*scaleV).data());
+		glVertex3fv((ptr_mesh_->Tri[i].Vertex_1*scaleV).data());
+		glVertex3fv((ptr_mesh_->Tri[i].Vertex_2*scaleV).data());
 
-		glVertex3fv((ptr_mesh_->Tria[i].Vertex_3*scaleV).data());//顺序不能调换
-		glVertex3fv((ptr_mesh_->Tria[i].Vertex_1*scaleV).data());
+		glVertex3fv((ptr_mesh_->Tri[i].Vertex_3*scaleV).data());//顺序不能调换
+		glVertex3fv((ptr_mesh_->Tri[i].Vertex_1*scaleV).data());
 
-		glVertex3fv((ptr_mesh_->Tria[i].Vertex_2*scaleV).data());
-		glVertex3fv((ptr_mesh_->Tria[i].Vertex_3*scaleV).data());
+		glVertex3fv((ptr_mesh_->Tri[i].Vertex_2*scaleV).data());
+		glVertex3fv((ptr_mesh_->Tri[i].Vertex_3*scaleV).data());
 		glEnd();
 	}
 
@@ -772,13 +780,18 @@ void RenderingWidget::DrawFace(bool bv)
 
 
 	//}
-	for (int i = 0; i < ptr_mesh_->Tria.size(); ++i)
+	for (int i = 0; i < ptr_mesh_->Tri.size(); ++i)
 	{
+		//if (ptr_mesh_->Tria[i].partitionNumber == 1)
+		//{
+		//	continue;
+		//}
+
 		glColor3f(0.8, 0.8, 0.8);
 		//glColor3f(0.3647, 0.3647, 0.3647);
 
 		//if (updateFlag) {
-		if (ptr_mesh_->Tria[i].selected == 1)
+		if (ptr_mesh_->Tri[i].selected == 1)
 		{
 			glColor3f(0.8, 0, 0);
 			//	continue;
@@ -786,14 +799,14 @@ void RenderingWidget::DrawFace(bool bv)
 		//}
 
 
-		glVertex3fv((ptr_mesh_->Tria[i].Vertex_1*scaleV).data());
-		glVertex3fv((ptr_mesh_->Tria[i].Vertex_2*scaleV).data());
+		glVertex3fv((ptr_mesh_->Tri[i].Vertex_1*scaleV).data());
+		glVertex3fv((ptr_mesh_->Tri[i].Vertex_2*scaleV).data());
 
-		glVertex3fv((ptr_mesh_->Tria[i].Vertex_3*scaleV).data());//顺序不能调换
-		glVertex3fv((ptr_mesh_->Tria[i].Vertex_1*scaleV).data());
+		glVertex3fv((ptr_mesh_->Tri[i].Vertex_3*scaleV).data());//顺序不能调换
+		glVertex3fv((ptr_mesh_->Tri[i].Vertex_1*scaleV).data());
 
-		glVertex3fv((ptr_mesh_->Tria[i].Vertex_2*scaleV).data());
-		glVertex3fv((ptr_mesh_->Tria[i].Vertex_3*scaleV).data());
+		glVertex3fv((ptr_mesh_->Tri[i].Vertex_2*scaleV).data());
+		glVertex3fv((ptr_mesh_->Tri[i].Vertex_3*scaleV).data());
 
 
 	}

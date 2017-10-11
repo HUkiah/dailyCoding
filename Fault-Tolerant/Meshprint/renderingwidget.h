@@ -43,10 +43,11 @@ protected:
 public:
 	void keyPressEvent(QKeyEvent *e);
 	void keyReleaseEvent(QKeyEvent *e);
-
+	
 signals:
-	//void meshInfo(int, int, int);
-	//void operatorInfo(QString);
+	void sendMsgtoDialog(QString);
+	/*void meshInfo(int, int, int);
+	void operatorInfo(QString);*/
 
 private:
 	void Render();
@@ -54,7 +55,7 @@ private:
 
 public slots:
 	void ResetView();
-	void RecvMsg();
+	void RecvMsg(QString);
 	void ApplyMaintenance();
 	void SetBackground();
 	void ReadMesh();

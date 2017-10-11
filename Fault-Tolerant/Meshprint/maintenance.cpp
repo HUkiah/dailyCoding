@@ -1,14 +1,11 @@
 #include "maintenance.h"  
 #include "ui_maintenance.h"  
-#include<QHBoxLayout>  
-
+#include "globalFunctions.h"
 
 MyDialog::MyDialog(QWidget *parent) :
-	QDialog(parent),
-	ui(new Ui::MyDialog)
+	QDialog(parent),ui(new Ui::MyDialog)
 {
 	ui->setupUi(this);
-
 }
 
 MyDialog::~MyDialog()
@@ -16,21 +13,12 @@ MyDialog::~MyDialog()
 	delete ui;
 }
 
-void MyDialog::off_pushButton_clicked()
+void MyDialog::on_updateButton_clicked()
 {
-
-	updateFlag = false;
-
-	emit SendMsg();
-
+	emit SendMsg(tr("update"));
 }
 
-void MyDialog::on_pushButton_clicked()
-{
-	
-	updateFlag = true;
-
-	emit SendMsg();
-
-	//updateFlag = false;
+//控制maintenance只产生一个Dialog
+void MyDialog::DialogClose() {
+	actionMaintenanceFlag = true;
 }
