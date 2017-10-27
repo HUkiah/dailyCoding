@@ -1,0 +1,24 @@
+﻿  Moc'ing meshprint.h...
+  Uic'ing meshprint.ui...
+  Moc'ing maintenance.h...
+  Moc'ing renderingwidget.h...
+  Rcc'ing meshprint.qrc...
+  Uic'ing maintenance.ui...
+  ArcBall.cpp
+  moc_maintenance.cpp
+  moc_meshprint.cpp
+  moc_renderingwidget.cpp
+  globalFunctions.cpp
+  Mesh3D.cpp
+  main.cpp
+  maintenance.cpp
+  meshprint.cpp
+  MSAABB.cpp
+  MsOctree.cpp
+  renderingwidget.cpp
+renderingwidget.cpp : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  正在生成代码...
+e:\____workspace____\dailycoding\fault-tolerant\meshprint\triangle.h(90): warning C4715: “Triangle::mappingValue”: 不是所有的控件路径都返回值
+  qrc_meshprint.cpp
+  Meshprint.vcxproj -> E:\____WorkSpace____\dailyCoding\Fault-Tolerant\x64\Debug\Meshprint.exe
+  Meshprint.vcxproj -> E:\____WorkSpace____\dailyCoding\Fault-Tolerant\x64\Debug\Meshprint.pdb (Full PDB)
